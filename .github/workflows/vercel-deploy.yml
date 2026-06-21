@@ -64,9 +64,10 @@ jobs:
         with:
           name: frontend-build
           path: |
-          apps/admin-frontend/dist # o apps/web/out or apps/web/build según tu framework
-          apps/admin-frontend/.next
-          apps/admin-frontend/out
+            apps/admin-frontend/build
+            apps/cocina-frontend/build
+            apps/caja-frontend/build
+            apps/delivery-frontend/build
 
   vercel-deploy:
     name: Deploy to Vercel
