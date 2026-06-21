@@ -35,6 +35,10 @@ app.use(errorHandler);
 
 const PORT = process.env.COCINA_BACKEND_PORT || 5001;
 
-app.listen(PORT, () => {
-    console.log(`Cocina server running on port ${PORT}`);
-});
+if (require.main === module) {
+    app.listen(PORT, () => {
+        console.log(`Cocina server running on port ${PORT}`);
+    });
+}
+
+module.exports = app;

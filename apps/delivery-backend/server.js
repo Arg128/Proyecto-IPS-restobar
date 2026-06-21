@@ -28,6 +28,11 @@ app.use(notFound);
 app.use(errorHandler);
 
 const PORT = process.env.DELIVERY_BACKEND_PORT || 5003;
-app.listen(PORT, () => {
-    console.log(`Delivery server running on port ${PORT}`);
-});
+
+if (require.main === module) {
+    app.listen(PORT, () => {
+        console.log(`Delivery server running on port ${PORT}`);
+    });
+}
+
+module.exports = app;

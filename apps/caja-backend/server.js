@@ -36,6 +36,10 @@ app.use(errorHandler);
 
 const PORT = process.env.CAJA_BACKEND_PORT || 5003;
 
-app.listen(PORT, () => {
-    console.log(`Caja server running on port ${PORT}`);
-});
+if (require.main === module) {
+    app.listen(PORT, () => {
+        console.log(`Caja server running on port ${PORT}`);
+    });
+}
+
+module.exports = app;

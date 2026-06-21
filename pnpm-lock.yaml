@@ -54,9 +54,6 @@ importers:
       mysql2:
         specifier: ^2.2.5
         version: 2.3.3
-      path:
-        specifier: ^0.12.7
-        version: 0.12.7
       pg:
         specifier: ^8.21.0
         version: 8.21.0
@@ -5478,9 +5475,6 @@ packages:
   path-type@4.0.0:
     resolution: {integrity: sha512-gDKb8aZMDeD/tZWs9P6+q0J9Mwkdl6xMV8TjnGP3qJVJ06bdMgkbBlLU8IdfOsIsFz2BW1rNVT3XuNEl8zPAvw==}
     engines: {node: '>=8'}
-
-  path@0.12.7:
-    resolution: {integrity: sha512-aXXC6s+1w7otVF9UletFkFcDsJeO7lSZBPUQhtb5O0xJe8LtYhj/GxldoL09bBj9+ZmE2hNoHqQSFMN5fikh4Q==}
 
   pbkdf2@3.1.6:
     resolution: {integrity: sha512-BT6eelPB1EyGHo8pC0o9Bl6k6SYVhKO1jEbd3lcTrtr7XHdjP8BW1YpfCV3G9Kwkxgattk+S5q2/RvuttCsS1g==}
@@ -11642,7 +11636,7 @@ snapshots:
 
   eslint-import-resolver-node@0.3.10:
     dependencies:
-      debug: 3.2.7(supports-color@5.5.0)
+      debug: 3.2.7(supports-color@6.1.0)
       is-core-module: 2.16.2
       resolve: 2.0.0-next.7
     transitivePeerDependencies:
@@ -11660,7 +11654,7 @@ snapshots:
 
   eslint-module-utils@2.12.1(@typescript-eslint/parser@2.34.0(eslint@6.8.0)(typescript@6.0.3))(eslint-import-resolver-node@0.3.10)(eslint@6.8.0):
     dependencies:
-      debug: 3.2.7(supports-color@5.5.0)
+      debug: 3.2.7(supports-color@6.1.0)
     optionalDependencies:
       '@typescript-eslint/parser': 2.34.0(eslint@6.8.0)(typescript@6.0.3)
       eslint: 6.8.0
@@ -14386,11 +14380,6 @@ snapshots:
       pify: 3.0.0
 
   path-type@4.0.0: {}
-
-  path@0.12.7:
-    dependencies:
-      process: 0.11.10
-      util: 0.10.4
 
   pbkdf2@3.1.6:
     dependencies:
