@@ -18,7 +18,7 @@
   },
   "scripts": {
     "start": "serve -s build -l 3002",
-    "build": "react-scripts build",
+    "build": "react-scripts --openssl-legacy-provider build",
     "test": "react-scripts test",
     "dev": "cross-env PORT=3002 react-scripts --openssl-legacy-provider start"
   },
