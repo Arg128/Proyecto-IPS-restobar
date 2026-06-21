@@ -1,6 +1,5 @@
 {
   "globalEnv": [
-    "NODE_ENV",
     "PORT",
     "HOST",
     "ADMIN_FRONTEND_PORT",
