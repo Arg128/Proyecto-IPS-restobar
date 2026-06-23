@@ -1,5 +1,5 @@
 {
-  "cacheDir": ".turbo/cache"
+  "cacheDir": ".turbo/cache",
   "globalEnv": [
     "NODE_ENV",
     "PORT",
