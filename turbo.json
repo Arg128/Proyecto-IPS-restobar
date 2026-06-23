@@ -1,4 +1,5 @@
 {
+  "cacheDir": ".turbo/cache"
   "globalEnv": [
     "NODE_ENV",
     "PORT",
@@ -28,8 +29,7 @@
     "build": {
       "dependsOn": ["^build"],
       "inputs": ["src/**", "public/**", "package.json"],
-      "outputs": [".next/**", "dist/**", "build/**"],
-      "cacheDir": ".turbo/cache"
+      "outputs": [".next/**", "dist/**", "build/**"]
     },
     "dev": {
       "cache": false,
