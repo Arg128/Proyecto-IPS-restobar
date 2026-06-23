@@ -11,8 +11,8 @@
     "CAJA_FRONTEND_PORT",
     "DELIVERY_BACKEND_PORT",
     "DELIVERY_FRONTEND_PORT",
-    "MESAS_BACKEND_PORT",
-    "MESAS_FRONTEND_PORT",
+    // "MESAS_BACKEND_PORT",
+    // "MESAS_FRONTEND_PORT",
     "DB_USER",
     "DB_PASSWORD",
     "DB_NAME",
@@ -20,10 +20,8 @@
     "DB_PORT",
     "DB_DIALECT",
     "JWT_SECRET",
-    "VERCEL",
-    "VERCEL_ENV",
-    "VERCEL_URL"
-],
+    "VERCEL"
+  ],
   "$schema": "https://turbo.build/schema.json",
   "tasks": {
     "build": {

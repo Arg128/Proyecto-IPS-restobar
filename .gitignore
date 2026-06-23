@@ -45,3 +45,5 @@ credits.txt
 
 # Turborepo
 .turbo
+.vercel
+.env*
