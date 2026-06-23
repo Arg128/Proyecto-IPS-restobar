@@ -12,7 +12,6 @@ const nextId = () => ++uid;
 const CocinaScreen = () => {
     const dispatch = useDispatch();
 
-    const productosConEventos = useSelector((state) => state.productosConEventos);
     const ordenesPendientes = useSelector((state) => state.ordenesPendientes);
 
     const [colaLocal, setColaLocal] = useState([]);

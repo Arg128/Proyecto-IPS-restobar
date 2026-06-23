@@ -1,0 +1,5 @@
+{
+  "installCommand": "pnpm install",
+  "framework": null,
+  "ignoreCommand": "npx turbo-ignore"
+}

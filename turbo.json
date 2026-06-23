@@ -27,11 +27,16 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": [".next/**", "dist/**", "build/**"]
+      "inputs": ["src/**", "public/**", "package.json"],
+      "outputs": [".next/**", "dist/**", "build/**"],
+      "cacheDir": ".turbo/cache"
     },
     "dev": {
       "cache": false,
       "persistent": true
+    },
+    "lint": {
+      "outputs": []
     },
     "db:migrate": {
       "cache": false
@@ -41,7 +46,6 @@
       "cache": false
     },
     "db:generate": {
-      "dependsOn": ["db:generate"],
       "cache": false
     },
     "start": {
