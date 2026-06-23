@@ -7,10 +7,11 @@ frontend/public/pages
 /.pnp
 .pnp.js
 
-
+#static/
 #build
 dist/
 build/
+build/*
 #extra
 /extra
 
@@ -41,3 +42,6 @@ yarn-debug.log*
 yarn-error.log*
 
 credits.txt
+
+# Turborepo
+.turbo
