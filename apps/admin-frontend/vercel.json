@@ -1,8 +1,9 @@
 {
-  "buildCommand": "cd ../.. && npx turbo run build --filter=frontend...",
+  "buildCommand": "cd ../.. && CI=false npx turbo run build --filter=frontend...",
   "installCommand": "cd ../.. && pnpm install",
   "framework": "create-react-app",
   "outputDirectory": "build",
+  "ignoreCommand": "npx turbo-ignore frontend",
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ]
