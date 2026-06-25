@@ -4,7 +4,7 @@
     "description": "Aplicacion para restaurantes",
     "main": "server.js",
     "engines": {
-        "node": "20.x",
+        "node": "24.x",
         "npm": "10.x"
     },
     "scripts": {

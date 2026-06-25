@@ -7,7 +7,7 @@ import LoginScreen from "./screens/auth/LoginScreen";
 
 const App = () => {
     return (
-        <Router>
+        <Router basename="/admin">
             <Switch>
                 <Route path="/login" component={LoginScreen} />
                 <Route path="/" component={Main} />

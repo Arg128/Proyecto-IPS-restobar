@@ -11,7 +11,7 @@ const DeliveryScreen = () => {
     useEffect(() => {
         const fetchPedidos = async () => {
             try {
-                const { data } = await axios.get("http://localhost:5003/api/delivery/pedidos");
+                const { data } = await axios.get("/api/delivery/pedidos");
                 setPedidos(data);
                 setLoading(false);
             } catch (err) {
@@ -91,11 +91,9 @@ const DeliveryScreen = () => {
                                             onChange={(e) => setKeyword(e.target.value)}
                                             style={{ width: "250px" }}
                                         />
-                                        <Link to="/order/create">
-                                            <button className="btn btn-success btn-sm">
-                                                <i className="fas fa-plus mr-1" />
-                                                Nuevo Pedido
-                                            </button>
+                                        <Link to="/order/create" className="btn btn-success btn-sm">
+                                            <i className="fas fa-plus mr-1" />
+                                            Nuevo Pedido
                                         </Link>
                                     </div>
                                 </div>

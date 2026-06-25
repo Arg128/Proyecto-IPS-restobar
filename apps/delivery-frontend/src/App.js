@@ -11,13 +11,13 @@ import OrderCreateScreen from "./screens/OrderCreateScreen";
 
 const App = () => {
     return (
-        <Router>
+        <Router basename="/delivery">
             <Header />
             <Sidebar />
             <div className="content-wrapper" style={{ minHeight: "100vh", padding: "15px" }}>
                 <Switch>
                     <Route exact path="/" render={() => <HomeScreen />} />
-                    <Route exact path="/delivery" render={() => <DeliveryScreen />} />
+                    <Route exact path="/pedidos" render={() => <DeliveryScreen />} />
                     <Route exact path="/order/:id/view" render={(props) => <OrderViewScreen {...props} />} />
                     <Route exact path="/order/create" render={(props) => <OrderCreateScreen {...props} />} />
                 </Switch>

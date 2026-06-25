@@ -1,5 +1,5 @@
 import React from "react";
-import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
+import { BrowserRouter as Router, Route, Switch, Link } from "react-router-dom";
 import DashboardScreen from "./screens/DashboardScreen";
 import PagosScreen from "./screens/PagosScreen";
 import FacturasScreen from "./screens/FacturasScreen";
@@ -8,7 +8,7 @@ import EstadisticasScreen from "./screens/EstadisticasScreen";
 
 const App = () => {
     return (
-        <Router>
+        <Router basename="/caja">
             <div className="wrapper">
                 <nav className="main-header navbar navbar-expand navbar-white navbar-light">
                     <ul className="navbar-nav">
@@ -18,41 +18,41 @@ const App = () => {
                     </ul>
                 </nav>
                 <aside className="main-sidebar sidebar-dark-primary elevation-4">
-                    <a href="/" className="brand-link">
+                    <Link to="/" className="brand-link">
                         <span className="brand-text font-weight-light">Caja - Restobar</span>
-                    </a>
+                    </Link>
                     <div className="sidebar">
                         <nav className="mt-2">
                             <ul className="nav nav-pills nav-sidebar flex-column" data-widget="treeview">
                                 <li className="nav-item">
-                                    <a href="/" className="nav-link">
+                                    <Link to="/" className="nav-link">
                                         <i className="nav-icon fas fa-tachometer-alt"></i>
                                         <p>Dashboard</p>
-                                    </a>
+                                    </Link>
                                 </li>
                                 <li className="nav-item">
-                                    <a href="/pagos" className="nav-link">
+                                    <Link to="/pagos" className="nav-link">
                                         <i className="nav-icon fas fa-dollar-sign"></i>
                                         <p>Pagos</p>
-                                    </a>
+                                    </Link>
                                 </li>
                                 <li className="nav-item">
-                                    <a href="/facturas" className="nav-link">
+                                    <Link to="/facturas" className="nav-link">
                                         <i className="nav-icon fas fa-receipt"></i>
                                         <p>Facturas</p>
-                                    </a>
+                                    </Link>
                                 </li>
                                 <li className="nav-item">
-                                    <a href="/gastos" className="nav-link">
+                                    <Link to="/gastos" className="nav-link">
                                         <i className="nav-icon fas fa-shopping-cart"></i>
                                         <p>Gastos</p>
-                                    </a>
+                                    </Link>
                                 </li>
                                 <li className="nav-item">
-                                    <a href="/estadisticas" className="nav-link">
+                                    <Link to="/estadisticas" className="nav-link">
                                         <i className="nav-icon fas fa-chart-bar"></i>
                                         <p>Estadísticas</p>
-                                    </a>
+                                    </Link>
                                 </li>
                             </ul>
                         </nav>

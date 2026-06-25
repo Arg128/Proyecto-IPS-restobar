@@ -48,7 +48,7 @@ const OrderCreateScreen = ({ history }) => {
         setLoading(true);
 
         try {
-            await axios.post("http://localhost:5003/api/delivery/pedidos", {
+            await axios.post("/api/delivery/pedidos", {
                 cliente: cliente.nombre,
                 direccion: cliente.direccion,
                 telefono: cliente.telefono,
@@ -56,7 +56,7 @@ const OrderCreateScreen = ({ history }) => {
                 total: total,
                 productos: carrito,
             });
-            history.push("/delivery");
+            history.push("/pedidos");
         } catch (err) {
             setErrors({ general: "Error al crear el pedido. Intenta de nuevo." });
             setLoading(false);
@@ -68,7 +68,7 @@ const OrderCreateScreen = ({ history }) => {
             <div className="content-header">
                 <div className="container-fluid">
                     <div className="d-flex align-items-center">
-                        <Link to="/delivery" className="btn btn-secondary btn-sm mr-3">
+                        <Link to="/pedidos" className="btn btn-secondary btn-sm mr-3">
                             <i className="fas fa-arrow-left mr-1" /> Volver
                         </Link>
                         <h1 className="m-0">

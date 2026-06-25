@@ -22,7 +22,7 @@ const OrderViewScreen = ({ match, history }) => {
     useEffect(() => {
         const fetchPedido = async () => {
             try {
-                const { data } = await axios.get(`http://localhost:5003/api/delivery/pedidos/${id}`);
+                const { data } = await axios.get(`/api/delivery/pedidos/${id}`);
                 setOrder(data);
                 setLoading(false);
             } catch (err) {
@@ -46,7 +46,7 @@ const OrderViewScreen = ({ match, history }) => {
             }
         }
         try {
-            await axios.put(`http://localhost:5003/api/delivery/pedidos/${id}/pagar`, {
+            await axios.put(`/api/delivery/pedidos/${id}/pagar`, {
                 metodoPago,
             });
             setErrorTarjeta("");
@@ -69,7 +69,7 @@ const OrderViewScreen = ({ match, history }) => {
             <div className="content-header">
                 <div className="container-fluid">
                     <div className="d-flex align-items-center">
-                        <Link to="/delivery" className="btn btn-secondary btn-sm mr-3">
+                        <Link to="/pedidos" className="btn btn-secondary btn-sm mr-3">
                             <i className="fas fa-arrow-left mr-1" /> Volver
                         </Link>
                         <h1 className="m-0">

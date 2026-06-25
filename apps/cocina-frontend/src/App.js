@@ -8,7 +8,7 @@ import PrivateRoute from "./auth/PrivateRoute";
 
 const App = () => {
     return (
-        <Router>
+        <Router basename="/cocina">
             <Switch>
                 <Route path="/login" component={LoginScreen} />
                 <PrivateRoute path="/" component={CocinaScreen} exact />
