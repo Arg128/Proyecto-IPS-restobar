@@ -8,7 +8,7 @@ import EstadisticasScreen from "./screens/EstadisticasScreen";
 
 const App = () => {
     return (
-        <Router basename="/caja">
+        <Router>
             <div className="wrapper">
                 <nav className="main-header navbar navbar-expand navbar-white navbar-light">
                     <ul className="navbar-nav">

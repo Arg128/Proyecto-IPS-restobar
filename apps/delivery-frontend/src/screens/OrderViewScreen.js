@@ -69,7 +69,7 @@ const OrderViewScreen = ({ match, history }) => {
             <div className="content-header">
                 <div className="container-fluid">
                     <div className="d-flex align-items-center">
-                        <Link to="/pedidos" className="btn btn-secondary btn-sm mr-3">
+                        <Link to="/delivery" className="btn btn-secondary btn-sm mr-3">
                             <i className="fas fa-arrow-left mr-1" /> Volver
                         </Link>
                         <h1 className="m-0">
