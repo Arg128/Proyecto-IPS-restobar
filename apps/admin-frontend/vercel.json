@@ -3,7 +3,7 @@
   "installCommand": "cd ../.. && pnpm install",
   "framework": "create-react-app",
   "outputDirectory": "build",
-  "ignoreCommand": "npx turbo-ignore frontend",
+  "ignoreCommand": "npx turbo-ignore admin-frontend",
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ]
