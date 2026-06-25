@@ -1,5 +1,5 @@
 {
-  "buildCommand": "cd ../.. && CI=false npx turbo run build --filter=frontend...",
+  "buildCommand": "cd ../.. && CI=false npx turbo run build --filter=admin-frontend...",
   "installCommand": "cd ../.. && pnpm install",
   "framework": "create-react-app",
   "outputDirectory": "build",
