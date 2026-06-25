@@ -1,5 +1,0 @@
-{
-  "installCommand": "cd ../.. && pnpm install",
-  "framework": "nodejs",
-  "outputDirectory": "."
-}

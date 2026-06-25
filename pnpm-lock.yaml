@@ -384,6 +384,55 @@ importers:
         specifier: ^14.2.0
         version: 14.2.6
 
+  apps/resto-backend:
+    dependencies:
+      '@restobar/database':
+        specifier: workspace:*
+        version: link:../../packages/database
+      bcrypt:
+        specifier: ^5.0.0
+        version: 5.1.1
+      cors:
+        specifier: ^2.8.6
+        version: 2.8.6
+      csv-parser:
+        specifier: ^3.2.1
+        version: 3.2.1
+      dotenv:
+        specifier: ^8.2.0
+        version: 8.6.0
+      express:
+        specifier: ^4.17.1
+        version: 4.22.2(supports-color@6.1.0)
+      express-async-handler:
+        specifier: ^1.1.4
+        version: 1.2.0
+      express-validator:
+        specifier: ^6.10.0
+        version: 6.15.0
+      jsonwebtoken:
+        specifier: ^8.5.1
+        version: 8.5.1
+      morgan:
+        specifier: ^1.10.0
+        version: 1.10.1
+      multer:
+        specifier: ^1.4.2
+        version: 1.4.4
+      mysql2:
+        specifier: ^2.2.5
+        version: 2.3.3
+      pg:
+        specifier: ^8.21.0
+        version: 8.21.0
+      sequelize:
+        specifier: ^6.3.5
+        version: 6.37.8(mysql2@2.3.3)(pg@8.21.0)
+    devDependencies:
+      nodemon:
+        specifier: ^2.0.5
+        version: 2.0.22
+
   packages/database:
     dependencies:
       bcrypt:

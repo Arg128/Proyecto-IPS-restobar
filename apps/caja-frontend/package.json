@@ -22,7 +22,7 @@
     "test": "react-scripts test",
     "dev": "cross-env PORT=3002 react-scripts --openssl-legacy-provider start"
   },
-  "proxy": "http://localhost:5002",
+  "proxy": "http://localhost:5000",
   "eslintConfig": {
     "extends": "react-app"
   },

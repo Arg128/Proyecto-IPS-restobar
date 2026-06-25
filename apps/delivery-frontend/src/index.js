@@ -6,7 +6,7 @@ import App from './App.js';
 import store from './store.js';
 import axios from "axios";
 
-axios.defaults.baseURL = process.env.REACT_APP_API_URL || "http://localhost:5003";
+axios.defaults.baseURL = process.env.REACT_APP_API_URL || `${process.env.HOST || "http://localhost"}:${process.env.RESTO_BACKEND_PORT || 5000}`;
 
 ReactDOM.render(
   <Provider store={store}>
