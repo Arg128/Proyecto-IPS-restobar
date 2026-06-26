@@ -1,80 +1,66 @@
-const asyncHandler = require("express-async-handler");
-const { Category } = require("../models");
-const { Op } = require("sequelize");
+const { eq, or, like, count } = require("drizzle-orm");
+const { db, now, categories } = require("@restobar/database");
 
-exports.createCategory = asyncHandler(async (req, res) => {
-    const name = req.body.name;
-    const createdCategory = await Category.create({ name });
-    res.status(201).json(createdCategory);
-});
+exports.createCategory = async (req, res) => {
+    const { name } = req.body;
+    const created = db.insert(categories).values({ name, createdAt: now(), updatedAt: now() }).returning().get();
+    res.status(201).json(created);
+};
 
-exports.getCategories = asyncHandler(async (req, res) => {
+exports.getCategories = async (req, res) => {
     const pageSize = 5;
     const page = Number(req.query.pageNumber) || 1;
-    const keyword = req.query.keyword ? req.query.keyword : null;
+    const keyword = req.query.keyword;
 
-    let options = {
-        attributes: {
-            exclude: ["updatedAt"],
-        },
-        offset: pageSize * (page - 1),
-        limit: pageSize,
-    };
+    let query = db.select().from(categories).limit(pageSize).offset(pageSize * (page - 1));
+    let countQuery = db.select({ total: count() }).from(categories);
 
     if (keyword) {
-        options = {
-            ...options,
-            where: {
-                [Op.or]: [
-                    { id: { [Op.like]: `%${keyword}%` } },
-                    { name: { [Op.like]: `%${keyword}%` } },
-                ],
-            },
-        };
+        const pattern = `%${keyword}%`;
+        const filter = or(like(categories.id, pattern), like(categories.name, pattern));
+        query = query.where(filter);
+        countQuery = countQuery.where(filter);
     }
 
-    const count = await Category.count({ ...options });
-    const categories = await Category.findAll({
-        ...options,
-    });
+    const result = query.all();
+    const total = countQuery.get();
 
-    res.json({ categories, page, pages: Math.ceil(count / pageSize) });
-});
+    res.json({ categories: result, page, pages: Math.ceil(total.total / pageSize) });
+};
 
-exports.getCategory = asyncHandler(async (req, res) => {
-    const category = await Category.findByPk(req.params.id);
+exports.getCategory = async (req, res) => {
+    const cat = db.select().from(categories).where(eq(categories.id, Number(req.params.id))).get();
 
-    if (category) {
-        res.json(category);
+    if (cat) {
+        res.json(cat);
     } else {
         res.status(404);
         throw new Error("Category not found");
     }
-});
+};
 
-exports.updateCategory = asyncHandler(async (req, res) => {
+exports.updateCategory = async (req, res) => {
     const { name } = req.body;
+    const cat = db.select().from(categories).where(eq(categories.id, Number(req.params.id))).get();
 
-    const category = await Category.findByPk(req.params.id);
-
-    if (category) {
-        category.name = name;
-        const updatedCategory = await category.save();
-        res.json(updatedCategory);
+    if (cat) {
+        db.update(categories).set({ name, updatedAt: now() }).where(eq(categories.id, Number(req.params.id))).run();
+        const updated = db.select().from(categories).where(eq(categories.id, Number(req.params.id))).get();
+        res.json(updated);
     } else {
         res.status(404);
         throw new Error("Category not found");
     }
-});
+};
 
-exports.deleteCategory = asyncHandler(async (req, res) => {
-    const category = await Category.findByPk(req.params.id);
+exports.deleteCategory = async (req, res) => {
+    const cat = db.select().from(categories).where(eq(categories.id, Number(req.params.id))).get();
 
-    if (category) {
-        await category.destroy();
+    if (cat) {
+        db.delete(categories).where(eq(categories.id, Number(req.params.id))).run();
         res.json({ message: "Category removed" });
     } else {
         res.status(404);
         throw new Error("Category not found");
     }
-});
+};

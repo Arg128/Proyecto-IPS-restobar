@@ -13,4 +13,8 @@ const errorHandler = (err, req, res, next) => {
     });
 };
 
+process.on("unhandledRejection", (err) => {
+    console.error(`Error: ${err.message}`);
+});
+
 module.exports = { notFound, errorHandler };

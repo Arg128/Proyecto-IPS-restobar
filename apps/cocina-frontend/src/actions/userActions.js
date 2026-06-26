@@ -15,7 +15,7 @@ export const login = (email, password) => async (dispatch) => {
         };
 
         const { data } = await axios.post(
-            "/api/coccion/users/login",
+            "/api/users/login",
             { email, password },
             config
         );

@@ -4,6 +4,7 @@ import LoginScreen from "./screens/LoginScreen";
 import CocinaScreen from "./screens/CocinaScreen";
 import ConfigScreen from "./screens/ConfigScreen";
 import MenuStockScreen from "./screens/MenuStockScreen";
+import ProductosScreen from "./screens/ProductosScreen";
 import PrivateRoute from "./auth/PrivateRoute";
 
 const App = () => {
@@ -14,6 +15,7 @@ const App = () => {
                 <PrivateRoute path="/" component={CocinaScreen} exact />
                 <PrivateRoute path="/config" component={ConfigScreen} />
                 <PrivateRoute path="/menu" component={MenuStockScreen} />
+                <PrivateRoute path="/productos" component={ProductosScreen} />
             </Switch>
         </Router>
     );

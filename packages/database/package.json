@@ -4,18 +4,19 @@
   "private": true,
   "main": "models/index.js",
   "scripts": {
-    "db:migrate": "sequelize-cli db:migrate",
-    "db:migrate:undo": "sequelize-cli db:migrate:undo",
-    "db:seed": "sequelize-cli db:seed:all",
-    "db:seed:undo": "sequelize-cli db:seed:undo:all"
+    "db:generate": "drizzle-kit generate --config=./drizzle.config.js",
+    "db:migrate": "drizzle-kit migrate --config=./drizzle.config.js",
+    "db:push": "drizzle-kit push --config=./drizzle.config.js",
+    "db:studio": "drizzle-kit studio --config=./drizzle.config.js",
+    "db:seed": "node drizzle/seed.js"
   },
   "dependencies": {
+    "@libsql/client": "^0.15.0",
     "bcrypt": "^5.0.0",
     "dotenv": "^8.2.0",
-    "mysql2": "^2.2.5",
-    "sequelize": "^6.3.5"
+    "drizzle-orm": "^0.43.0"
   },
   "devDependencies": {
-    "sequelize-cli": "^6.2.0"
+    "drizzle-kit": "^0.31.10"
   }
 }

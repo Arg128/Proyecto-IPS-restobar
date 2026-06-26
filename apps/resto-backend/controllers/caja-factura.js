@@ -1,55 +1,51 @@
-const asyncHandler = require("express-async-handler");
-const { Factura, Pago } = require("../models");
-const { Op } = require("sequelize");
+const { eq, and, gte, lte, between, count } = require("drizzle-orm");
+const { db, now, facturas, pagos } = require("@restobar/database");
 
-const getFacturas = asyncHandler(async (req, res) => {
+const getFacturas = async (req, res) => {
     const { tipo, desde, hasta } = req.query;
-    const where = {};
+    let conditions = [];
 
-    if (tipo) where.tipo = tipo;
-    if (desde && hasta) {
-        where.createdAt = {
-            [Op.between]: [
-                new Date(desde),
-                new Date(hasta),
-            ],
-        };
-    }
+    if (tipo) conditions.push(eq(facturas.tipo, tipo));
+    if (desde && hasta) conditions.push(between(facturas.createdAt, desde, hasta));
 
-    const facturas = await Factura.findAll({ where, include: [Pago] });
-    res.json(facturas);
-});
+    const filter = conditions.length > 0 ? and(...conditions) : undefined;
+    const result = filter
+        ? db.select().from(facturas).where(filter).all()
+        : db.select().from(facturas).all();
 
-const getFacturaById = asyncHandler(async (req, res) => {
-    const factura = await Factura.findByPk(req.params.id, { include: [Pago] });
+    const withPago = result.map(f => {
+        const p = db.select().from(pagos).where(eq(pagos.id, f.pago_id)).get();
+        return { ...f, Pago: p || null };
+    });
+    res.json(withPago);
+};
+
+const getFacturaById = async (req, res) => {
+    const factura = db.select().from(facturas).where(eq(facturas.id, Number(req.params.id))).get();
     if (!factura) {
         res.status(404);
         throw new Error("Factura no encontrada");
     }
-    res.json(factura);
-});
+    const p = db.select().from(pagos).where(eq(pagos.id, factura.pago_id)).get();
+    res.json({ ...factura, Pago: p || null });
+};
 
-const createFactura = asyncHandler(async (req, res) => {
+const createFactura = async (req, res) => {
     const { tipo, cliente_nombre, cliente_ruc, subtotal, pago_id } = req.body;
 
     const igv = parseFloat((subtotal * 0.18).toFixed(2));
     const total = parseFloat((subtotal + igv).toFixed(2));
 
-    const count = await Factura.count();
-    const numero = `${tipo === "factura" ? "F" : "B"}001-${String(count + 1).padStart(6, "0")}`;
+    const totalCount = db.select({ total: count() }).from(facturas).get();
+    const numero = `${tipo === "factura" ? "F" : "B"}001-${String((totalCount.total || 0) + 1).padStart(6, "0")}`;
 
-    const factura = await Factura.create({
-        tipo,
-        numero,
-        cliente_nombre,
-        cliente_ruc,
-        subtotal,
-        igv,
-        total,
-        pago_id,
-    });
+    const factura = db.insert(facturas).values({
+        tipo, numero, cliente_nombre, cliente_ruc,
+        subtotal: Number(subtotal), igv, total: Number(total),
+        pago_id: Number(pago_id), createdAt: now(), updatedAt: now(),
+    }).returning().get();
 
     res.status(201).json(factura);
-});
+};
 
 module.exports = { getFacturas, getFacturaById, createFactura };

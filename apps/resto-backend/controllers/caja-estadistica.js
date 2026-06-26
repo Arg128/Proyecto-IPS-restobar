@@ -1,94 +1,85 @@
-const asyncHandler = require("express-async-handler");
-const { Pago, Factura, Gasto } = require("../models");
-const { Op, fn, col, literal } = require("sequelize");
+const { eq, and, gte, count, sum } = require("drizzle-orm");
+const { db, pagos, facturas, gastos } = require("@restobar/database");
 
-const getIngresos = asyncHandler(async (req, res) => {
+const getIngresos = async (req, res) => {
     const { periodo } = req.query;
+    const all = db.select().from(pagos).where(eq(pagos.estado, "completado")).orderBy(pagos.createdAt, "asc").all();
 
-    let formato;
-    if (periodo === "dia") formato = "%Y-%m-%d";
-    else if (periodo === "semana") formato = "%Y-%u";
-    else if (periodo === "mes") formato = "%Y-%m";
-    else formato = "%Y";
+    const grouped = {};
+    for (const p of all) {
+        const d = new Date(p.createdAt);
+        let key;
+        if (periodo === "dia") key = d.toISOString().slice(0, 10);
+        else if (periodo === "semana") { const start = new Date(d); start.setDate(d.getDate() - d.getDay()); key = start.toISOString().slice(0, 10); }
+        else if (periodo === "mes") key = d.toISOString().slice(0, 7);
+        else key = d.toISOString().slice(0, 4);
 
-    const ingresos = await Pago.findAll({
-        attributes: [
-            [fn("DATE_FORMAT", col("createdAt"), formato), "periodo"],
-            [fn("SUM", col("monto")), "total"],
-            [fn("COUNT", col("id")), "cantidad"],
-        ],
-        where: { estado: "completado" },
-        group: [literal("periodo")],
-        order: [[literal("periodo"), "ASC"]],
-    });
-
-    res.json(ingresos);
-});
-
-const getMetodosPago = asyncHandler(async (req, res) => {
-    const metodos = await Pago.findAll({
-        attributes: [
-            "metodo_pago",
-            [fn("COUNT", col("id")), "cantidad"],
-            [fn("SUM", col("monto")), "total"],
-        ],
-        where: { estado: "completado" },
-        group: ["metodo_pago"],
-    });
-
-    res.json(metodos);
-});
-
-const getResumenGastos = asyncHandler(async (req, res) => {
-    const gastos = await Gasto.findAll({
-        attributes: [
-            "categoria",
-            [fn("SUM", col("monto")), "total"],
-            [fn("COUNT", col("id")), "cantidad"],
-        ],
-        group: ["categoria"],
-    });
-
-    res.json(gastos);
-});
-
-const getResumenGeneral = asyncHandler(async (req, res) => {
-    const { periodo } = req.query;
-
-    let fechaDesde = null;
-    const ahora = new Date();
-
-    if (periodo === "hoy") {
-        fechaDesde = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate());
-    } else if (periodo === "semana") {
-        fechaDesde = new Date();
-        fechaDesde.setDate(ahora.getDate() - 7);
-    } else if (periodo === "mes") {
-        fechaDesde = new Date(ahora.getFullYear(), ahora.getMonth(), 1);
-    } else if (periodo === "año") {
-        fechaDesde = new Date(ahora.getFullYear(), 0, 1);
+        if (!grouped[key]) grouped[key] = { periodo: key, total: 0, cantidad: 0 };
+        grouped[key].total += p.monto;
+        grouped[key].cantidad++;
     }
 
-    const whereClausePago = fechaDesde
-        ? { estado: "completado", createdAt: { [Op.gte]: fechaDesde } }
-        : { estado: "completado" };
+    res.json(Object.values(grouped));
+};
 
-    const whereClauseGasto = fechaDesde
-        ? { createdAt: { [Op.gte]: fechaDesde } }
-        : {};
+const getMetodosPago = async (req, res) => {
+    const all = db.select().from(pagos).where(eq(pagos.estado, "completado")).all();
+    const grouped = {};
 
-    const totalIngresos = await Pago.sum("monto", { where: whereClausePago });
-    const totalGastos = await Gasto.sum("monto", { where: whereClauseGasto });
-    const totalFacturas = await Factura.count();
-    const totalPagos = await Pago.count({ where: whereClausePago });
+    for (const p of all) {
+        const m = p.metodo_pago || "efectivo";
+        if (!grouped[m]) grouped[m] = { metodo_pago: m, cantidad: 0, total: 0 };
+        grouped[m].cantidad++;
+        grouped[m].total += p.monto;
+    }
+
+    res.json(Object.values(grouped));
+};
+
+const getResumenGastos = async (req, res) => {
+    const all = db.select().from(gastos).all();
+    const grouped = {};
+
+    for (const g of all) {
+        const c = g.categoria || "otros";
+        if (!grouped[c]) grouped[c] = { categoria: c, total: 0, cantidad: 0 };
+        grouped[c].total += g.monto;
+        grouped[c].cantidad++;
+    }
+
+    res.json(Object.values(grouped));
+};
+
+const getResumenGeneral = async (req, res) => {
+    const { periodo } = req.query;
+    let desde = null;
+    const ahora = new Date();
+
+    if (periodo === "hoy") desde = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate()).toISOString();
+    else if (periodo === "semana") { const d = new Date(); d.setDate(ahora.getDate() - 7); desde = d.toISOString(); }
+    else if (periodo === "mes") desde = new Date(ahora.getFullYear(), ahora.getMonth(), 1).toISOString();
+    else if (periodo === "año") desde = new Date(ahora.getFullYear(), 0, 1).toISOString();
+
+    let pagoFilter = eq(pagos.estado, "completado");
+    if (desde) pagoFilter = and(pagoFilter, gte(pagos.createdAt, desde));
+
+    const totalIngresos = db.select({ total: sum(pagos.monto) }).from(pagos).where(pagoFilter).get();
+    const totalPagos = db.select({ total: count() }).from(pagos).where(pagoFilter).get();
+    const totalFacturasCount = db.select({ total: count() }).from(facturas).get();
+
+    let gastoFilter = undefined;
+    if (desde) gastoFilter = gte(gastos.createdAt, desde);
+    const totalGastos = gastoFilter
+        ? db.select({ total: sum(gastos.monto) }).from(gastos).where(gastoFilter).get()
+        : db.select({ total: sum(gastos.monto) }).from(gastos).get();
 
     res.json({
-        totalIngresos: totalIngresos || 0,
-        totalGastos: totalGastos || 0,
-        ganancia: (totalIngresos || 0) - (totalGastos || 0),
-        totalFacturas,
-        totalPagos,
+        totalIngresos: totalIngresos.total || 0,
+        totalGastos: totalGastos.total || 0,
+        ganancia: (totalIngresos.total || 0) - (totalGastos.total || 0),
+        totalFacturas: totalFacturasCount.total || 0,
+        totalPagos: totalPagos.total || 0,
     });
-});
+};
 
 module.exports = { getIngresos, getMetodosPago, getResumenGastos, getResumenGeneral };

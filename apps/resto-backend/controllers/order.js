@@ -1,258 +1,209 @@
-const asyncHandler = require("express-async-handler");
-const { Order, Client, Table } = require("../models");
-const { Op } = require("sequelize");
-const {
-    stock,
-    updateTable,
-    addProductsInOrder,
-    updateProductsStock,
-} = require("../utils/order");
+const { eq, and, or, like, gte, lt, count, sum } = require("drizzle-orm");
+const { db, now, orders, clients, tables, orderProducts, products } = require("@restobar/database");
 
-exports.createOrder = asyncHandler(async (req, res) => {
-    const { total, tableId, clientId, products, delivery, note } = req.body;
+exports.createOrder = async (req, res) => {
+    const { total, tableId, clientId, products: prods, delivery, note } = req.body;
 
-    await stock(products);
+    const created = db.insert(orders).values({
+        total: Number(total),
+        tableId: delivery ? null : Number(tableId),
+        userId: req.user.id,
+        clientId: clientId ? Number(clientId) : null,
+        delivery: delivery || false,
+        note: note || null,
+        createdAt: now(),
+        updatedAt: now(),
+    }).returning().get();
 
-    if (stock) {
-        const createdOrder = await Order.create({
-            total,
-            tableId: !delivery ? tableId : null,
-            userId: req.user.id,
-            clientId: clientId,
-            delivery: delivery,
-            note: note,
-        });
+    for (const p of prods) {
+        db.insert(orderProducts).values({
+            orderId: created.id,
+            productId: Number(p.id),
+            quantity: p.quantity || 1,
+        }).run();
 
-        await addProductsInOrder(createdOrder, products);
-
-        if (!delivery) {
-            await updateTable(createdOrder.tableId, true);
+        const prod = db.select().from(products).where(eq(products.id, Number(p.id))).get();
+        if (prod) {
+            db.update(products).set({ stock: prod.stock - (p.quantity || 1) }).where(eq(products.id, Number(p.id))).run();
         }
-
-        await updateProductsStock(products, -1);
-
-        res.status(201).json(createdOrder);
-    } else {
-        res.status(400).json({ message: "There is no stock available" });
     }
-});
 
-exports.getOrders = asyncHandler(async (req, res) => {
+    if (!delivery && tableId) {
+        db.update(tables).set({ occupied: true }).where(eq(tables.id, Number(tableId))).run();
+    }
+
+    res.status(201).json(created);
+};
+
+exports.getOrders = async (req, res) => {
     const pageSize = 5;
     const page = Number(req.query.pageNumber) || 1;
-    const delivery = Boolean(req.query.delivery) || false;
-    const keyword = req.query.keyword ? req.query.keyword : null;
-    let options = {
-        include: [
-            { model: Client, as: "client" },
-            { model: Table, as: "table" },
-        ],
-        attributes: {
-            exclude: ["userId", "clientId", "tableId", "updatedAt"],
-        },
-        order: [["id", "DESC"]],
-        offset: pageSize * (page - 1),
-        limit: pageSize,
-    };
+    const keyword = req.query.keyword;
+    const deliveryFilter = req.query.delivery === "true";
+
+    let query = db.select().from(orders).limit(pageSize).offset(pageSize * (page - 1)).orderBy(orders.id, "desc");
+    let countQuery = db.select({ total: count() }).from(orders);
+    const conditions = [];
+
+    if (deliveryFilter) conditions.push(eq(orders.delivery, true));
 
     if (keyword) {
-        options = {
-            ...options,
-            where: {
-                [Op.or]: [
-                    { id: { [Op.like]: `%${keyword}%` } },
-                    { total: keyword },
-                    { "$client.name$": { [Op.like]: `%${keyword}%` } },
-                    { "$table.name$": { [Op.like]: `%${keyword}%` } },
-                ],
-            },
-        };
+        const pattern = `%${keyword}%`;
+        conditions.push(or(like(orders.id, pattern), like(orders.total, pattern)));
     }
 
-    if (delivery) {
-        options = {
-            ...options,
-            where: {
-                ...options.where,
-                delivery: {
-                    [Op.eq]: true,
-                },
-            },
-        };
+    if (conditions.length > 0) {
+        const filter = and(...conditions);
+        query = query.where(filter);
+        countQuery = countQuery.where(filter);
     }
 
-    const count = await Order.count({ ...options });
-    const orders = await Order.findAll({ ...options });
+    const result = query.all();
+    const total = countQuery.get();
 
-    res.json({ orders, page, pages: Math.ceil(count / pageSize) });
-});
-
-exports.getOrder = asyncHandler(async (req, res) => {
-    const order = await Order.findByPk(req.params.id, {
-        include: { all: true, nested: true },
+    const withRelations = result.map(o => {
+        const client = o.clientId ? db.select().from(clients).where(eq(clients.id, o.clientId)).get() : null;
+        const table = o.tableId ? db.select().from(tables).where(eq(tables.id, o.tableId)).get() : null;
+        return { ...o, client: client || null, table: table || null };
     });
+
+    res.json({ orders: withRelations, page, pages: Math.ceil(total.total / pageSize) });
+};
+
+exports.getOrder = async (req, res) => {
+    const order = db.select().from(orders).where(eq(orders.id, Number(req.params.id))).get();
+
     if (order) {
-        res.json(order);
+        const client = order.clientId ? db.select().from(clients).where(eq(clients.id, order.clientId)).get() : null;
+        const table = order.tableId ? db.select().from(tables).where(eq(tables.id, order.tableId)).get() : null;
+        const orderProds = db.select().from(orderProducts).where(eq(orderProducts.orderId, order.id)).all();
+        const productsWithQty = orderProds.map(op => {
+            const prod = db.select().from(products).where(eq(products.id, op.productId)).get();
+            return { ...prod, quantity: op.quantity };
+        });
+        res.json({ ...order, client, table, products: productsWithQty });
     } else {
         res.status(404);
         throw new Error("Order not found");
     }
-});
+};
 
-exports.updateOrderPay = asyncHandler(async (req, res) => {
-    const order = await Order.findByPk(req.params.id);
+exports.updateOrderPay = async (req, res) => {
+    const order = db.select().from(orders).where(eq(orders.id, Number(req.params.id))).get();
 
     if (order) {
         if (order.tableId) {
-            const table = await Table.findByPk(order.tableId);
-            table.occupied = false;
-            table.save();
+            db.update(tables).set({ occupied: false }).where(eq(tables.id, order.tableId)).run();
         }
-
-        order.isPaid = !order.isPaid;
-        const updatedOrder = await order.save();
-        res.json(updatedOrder);
+        db.update(orders).set({ isPaid: !order.isPaid, updatedAt: now() }).where(eq(orders.id, Number(req.params.id))).run();
+        const updated = db.select().from(orders).where(eq(orders.id, Number(req.params.id))).get();
+        res.json(updated);
     } else {
         res.status(404);
         throw new Error("Order not found");
     }
-});
+};
 
-exports.updateOrder = asyncHandler(async (req, res) => {
-    const order = await Order.findByPk(req.params.id, {
-        include: { all: true, nested: true },
-    });
-    const { total, clientId, tableId, delivery, products, note } = req.body;
+exports.updateOrder = async (req, res) => {
+    const order = db.select().from(orders).where(eq(orders.id, Number(req.params.id))).get();
+    const { total, clientId, tableId, delivery, products: prods, note } = req.body;
+
+    if (!order) {
+        res.status(404);
+        throw new Error("Order not found");
+    }
+
+    const updates = {
+        clientId: clientId !== undefined ? Number(clientId) : order.clientId,
+        delivery: delivery !== undefined ? delivery : order.delivery,
+        note: note !== undefined ? note : order.note,
+        updatedAt: now(),
+    };
+
+    if (order.tableId !== Number(tableId)) {
+        if (!order.tableId && !delivery) {
+            db.update(tables).set({ occupied: true }).where(eq(tables.id, Number(tableId))).run();
+            updates.tableId = Number(tableId);
+        } else if (order.tableId && delivery) {
+            db.update(tables).set({ occupied: false }).where(eq(tables.id, order.tableId)).run();
+            updates.tableId = null;
+        } else {
+            if (order.tableId) db.update(tables).set({ occupied: false }).where(eq(tables.id, order.tableId)).run();
+            if (tableId) db.update(tables).set({ occupied: true }).where(eq(tables.id, Number(tableId))).run();
+            updates.tableId = tableId ? Number(tableId) : null;
+        }
+    }
+
+    if (prods && Number(total) !== order.total) {
+        const oldProds = db.select().from(orderProducts).where(eq(orderProducts.orderId, order.id)).all();
+        for (const op of oldProds) {
+            const prod = db.select().from(products).where(eq(products.id, op.productId)).get();
+            if (prod) db.update(products).set({ stock: prod.stock + op.quantity }).where(eq(products.id, op.productId)).run();
+        }
+        db.delete(orderProducts).where(eq(orderProducts.orderId, order.id)).run();
+        for (const p of prods) {
+            db.insert(orderProducts).values({ orderId: order.id, productId: Number(p.id), quantity: p.quantity || 1 }).run();
+            const prod = db.select().from(products).where(eq(products.id, Number(p.id))).get();
+            if (prod) db.update(products).set({ stock: prod.stock - (p.quantity || 1) }).where(eq(products.id, Number(p.id))).run();
+        }
+        updates.total = Number(total);
+    }
+
+    db.update(orders).set(updates).where(eq(orders.id, Number(req.params.id))).run();
+    const updated = db.select().from(orders).where(eq(orders.id, Number(req.params.id))).get();
+    res.status(200).json(updated);
+};
+
+exports.updateOrderDelivery = async (req, res) => {
+    const order = db.select().from(orders).where(eq(orders.id, Number(req.params.id))).get();
 
     if (order) {
-        order.clientId = clientId;
-        order.delivery = delivery;
-        order.note = note;
-
-        if (order.tableId !== tableId) {
-            if (!order.tableId && !delivery) {
-                await updateTable(tableId, true);
-                order.tableId = tableId;
-            } else if (order.tableId && delivery) {
-                await updateTable(order.tableId, false);
-                order.tableId = null;
-            } else {
-                await updateTable(order.tableId, false);
-                await updateTable(tableId, true);
-                order.tableId = tableId;
-            }
-        }
-
-        if (parseFloat(order.total) !== parseFloat(total)) {
-            const oldProducts = await order.getProducts();
-            if (oldProducts) {
-                const formattedOldProducts = oldProducts.map((product) => {
-                    product.quantity = product.OrderProduct.quantity;
-                    return product;
-                });
-
-                await updateProductsStock(formattedOldProducts, 1);
-
-                await order.setProducts(null);
-
-                await addProductsInOrder(order, products);
-
-                await updateProductsStock(products, -1);
-            }
-        }
-        order.total = total;
-        const updatedOrder = await order.save();
-        res.status(200).json(updatedOrder);
+        db.update(orders).set({ delivery: !order.delivery, updatedAt: now() }).where(eq(orders.id, Number(req.params.id))).run();
+        const updated = db.select().from(orders).where(eq(orders.id, Number(req.params.id))).get();
+        res.json(updated);
     } else {
         res.status(404);
         throw new Error("Order not found");
     }
-});
+};
 
-exports.updateOrderDelivery = asyncHandler(async (req, res) => {
-    const order = await Order.findByPk(req.params.id);
-
-    if (order) {
-        order.delivery = !order.delivery;
-        const updatedOrder = await order.save();
-        res.json(updatedOrder);
-    } else {
-        res.status(404);
-        throw new Error("Order not found");
-    }
-});
-
-exports.deleteOrder = asyncHandler(async (req, res) => {
-    const order = await Order.findByPk(req.params.id);
+exports.deleteOrder = async (req, res) => {
+    const order = db.select().from(orders).where(eq(orders.id, Number(req.params.id))).get();
 
     if (order) {
-        await order.destroy();
+        db.delete(orderProducts).where(eq(orderProducts.orderId, order.id)).run();
+        db.delete(orders).where(eq(orders.id, Number(req.params.id))).run();
         res.json({ message: "Order removed" });
     } else {
         res.status(404);
         throw new Error("Order not found");
     }
-});
+};
 
-exports.getStatistics = asyncHandler(async (req, res) => {
-    const TODAY_START = new Date().setHours(0, 0, 0, 0);
+exports.getStatistics = async (req, res) => {
+    const TODAY_START = new Date();
+    TODAY_START.setHours(0, 0, 0, 0);
     const NOW = new Date();
+    const todayStartStr = TODAY_START.toISOString();
+    const nowStr = NOW.toISOString();
 
-    const sales = await Order.findAll({
-        where: {
-            isPaid: true,
-        },
-        limit: 5,
-        include: { all: true, nested: true },
-    });
+    const sales = db.select().from(orders).where(eq(orders.isPaid, true)).limit(5).all();
 
-    const totalSales = await Order.sum("total", {
-        where: {
-            isPaid: true,
-        },
-    });
-
-    const deliveriesMade = await Order.count({
-        where: {
-            delivery: true,
-            isPaid: true,
-        },
-    });
-
-    const totalOrdersPaid = await Order.count({
-        where: {
-            isPaid: true,
-        },
-    });
-
-    const todaySales = await Order.sum("total", {
-        where: {
-            updatedAt: {
-                [Op.gt]: TODAY_START,
-                [Op.lt]: NOW,
-            },
-            isPaid: true,
-        },
-    });
-
-    const orders = await Order.findAll({
-        where: {
-            [Op.or]: [{ isPaid: false }],
-        },
-        include: { all: true, nested: true },
-        attributes: {
-            exclude: ["userId", "clientId", "tableId"],
-        },
-    });
+    const totalSales = db.select({ total: sum(orders.total) }).from(orders).where(eq(orders.isPaid, true)).get();
+    const deliveriesMade = db.select({ total: count() }).from(orders).where(and(eq(orders.delivery, true), eq(orders.isPaid, true))).get();
+    const totalOrdersPaid = db.select({ total: count() }).from(orders).where(eq(orders.isPaid, true)).get();
+    const todaySales = db.select({ total: sum(orders.total) }).from(orders)
+        .where(and(eq(orders.isPaid, true), gte(orders.updatedAt, todayStartStr))).get();
+    const unpaidOrders = db.select().from(orders).where(eq(orders.isPaid, false)).all();
 
     res.json({
         statistics: {
-            total: totalSales,
-            today: todaySales,
-            orders: totalOrdersPaid,
-            deliveries: deliveriesMade,
+            total: totalSales.total || 0,
+            today: todaySales.total || 0,
+            orders: totalOrdersPaid.total || 0,
+            deliveries: deliveriesMade.total || 0,
         },
         sales,
-        orders,
+        orders: unpaidOrders,
     });
-});
+};

@@ -1,13 +1,12 @@
-const asyncHandler = require("express-async-handler");
-const { User } = require("../models");
+const { eq } = require("drizzle-orm");
+const bcrypt = require("bcrypt");
+const { db, users } = require("@restobar/database");
 const generateToken = require("../utils/generateToken");
 
-exports.loginCocina = asyncHandler(async (req, res) => {
+exports.loginCocina = async (req, res) => {
     const { email, password } = req.body;
 
-    const user = await User.scope("withPassword").findOne({
-        where: { email },
-    });
+    const user = db.select().from(users).where(eq(users.email, email)).get();
 
     if (!user) {
         res.status(401);
@@ -19,7 +18,7 @@ exports.loginCocina = asyncHandler(async (req, res) => {
         throw new Error("Superusers cannot access the kitchen app");
     }
 
-    if (!(await user.validPassword(password))) {
+    if (!bcrypt.compareSync(password, user.password)) {
         res.status(401);
         throw new Error("Invalid email or password");
     }
@@ -32,4 +31,4 @@ exports.loginCocina = asyncHandler(async (req, res) => {
         image: user.image,
         token: generateToken(user.id),
     });
-});
+};

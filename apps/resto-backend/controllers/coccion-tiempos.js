@@ -1,67 +1,63 @@
-const asyncHandler = require("express-async-handler");
-const { TiempoCoccion, EventoCoccion, Product } = require("../models");
+const { eq } = require("drizzle-orm");
+const { db, tiemposCoccion, eventosCoccion, products } = require("@restobar/database");
 
-exports.obtenerTiempos = asyncHandler(async (req, res) => {
-    const tiempos = await TiempoCoccion.findAll({
-        include: [{ model: Product, as: "producto" }],
+exports.obtenerTiempos = async (req, res) => {
+    const result = db.select().from(tiemposCoccion).all();
+    const withProduct = result.map(t => {
+        const prod = t.productId ? db.select().from(products).where(eq(products.id, t.productId)).get() : null;
+        return { ...t, producto: prod || null };
     });
-    res.json(tiempos);
-});
+    res.json(withProduct);
+};
 
-exports.actualizarTiempo = asyncHandler(async (req, res) => {
+exports.actualizarTiempo = async (req, res) => {
     const { productId } = req.params;
     const { tiempoPromedio } = req.body;
 
-    const [tiempo] = await TiempoCoccion.findOrCreate({
-        where: { productId },
-        defaults: { productId, principal: tiempoPromedio },
-    });
+    const existing = db.select().from(tiemposCoccion).where(eq(tiemposCoccion.productId, Number(productId))).get();
 
-    if (tiempo.principal !== tiempoPromedio) {
-        tiempo.principal = tiempoPromedio;
-        await tiempo.save();
+    if (existing) {
+        db.update(tiemposCoccion).set({ principal: tiempoPromedio }).where(eq(tiemposCoccion.productId, Number(productId))).run();
+    } else {
+        db.insert(tiemposCoccion).values({ productId: Number(productId), principal: tiempoPromedio }).run();
     }
 
-    res.json(tiempo);
-});
+    const result = db.select().from(tiemposCoccion).where(eq(tiemposCoccion.productId, Number(productId))).get();
+    res.json(result);
+};
 
-exports.obtenerEventosDeProducto = asyncHandler(async (req, res) => {
-    const eventos = await EventoCoccion.findAll({
-        where: { productId: req.params.productId },
-        order: [["orden", "ASC"]],
-    });
-    res.json(eventos);
-});
+exports.obtenerEventosDeProducto = async (req, res) => {
+    const result = db.select().from(eventosCoccion).where(eq(eventosCoccion.productId, Number(req.params.productId))).orderBy(eventosCoccion.orden, "asc").all();
+    res.json(result);
+};
 
-exports.configurarEventos = asyncHandler(async (req, res) => {
+exports.configurarEventos = async (req, res) => {
     const { productId } = req.params;
     const { eventos } = req.body;
 
-    await EventoCoccion.destroy({ where: { productId } });
+    db.delete(eventosCoccion).where(eq(eventosCoccion.productId, Number(productId))).run();
 
     if (eventos && eventos.length > 0) {
-        const nuevos = eventos.map((e, i) => ({
-            productId: parseInt(productId),
-            nombre: e.nombre,
-            duracionSegundos: e.duracionSegundos || 0,
-            orden: i,
-        }));
-        await EventoCoccion.bulkCreate(nuevos);
+        for (let i = 0; i < eventos.length; i++) {
+            db.insert(eventosCoccion).values({
+                productId: Number(productId),
+                nombre: eventos[i].nombre,
+                duracionSegundos: eventos[i].duracionSegundos || 0,
+                orden: i,
+            }).run();
+        }
     }
 
-    const creados = await EventoCoccion.findAll({
-        where: { productId },
-        order: [["orden", "ASC"]],
-    });
+    const creados = db.select().from(eventosCoccion).where(eq(eventosCoccion.productId, Number(productId))).orderBy(eventosCoccion.orden, "asc").all();
     res.json(creados);
-});
+};
 
-exports.obtenerProductos = asyncHandler(async (req, res) => {
-    const productos = await Product.findAll({
-        include: [
-            { model: TiempoCoccion, as: "tiemposCoccion" },
-            { model: EventoCoccion, as: "eventosCoccion" },
-        ],
+exports.obtenerProductos = async (req, res) => {
+    const result = db.select().from(products).all();
+    const withRelations = result.map(p => {
+        const tc = db.select().from(tiemposCoccion).where(eq(tiemposCoccion.productId, p.id)).get() || null;
+        const ev = db.select().from(eventosCoccion).where(eq(eventosCoccion.productId, p.id)).orderBy(eventosCoccion.orden, "asc").all();
+        return { ...p, tiemposCoccion: tc, eventosCoccion: ev };
     });
-    res.json(productos);
-});
+    res.json(withRelations);
+};

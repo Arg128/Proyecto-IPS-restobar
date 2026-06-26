@@ -1,62 +1,61 @@
-const asyncHandler = require("express-async-handler");
-const { Gasto } = require("../models");
-const { Op } = require("sequelize");
+const { eq, and, between } = require("drizzle-orm");
+const { db, now, gastos } = require("@restobar/database");
 
-const getGastos = asyncHandler(async (req, res) => {
+const getGastos = async (req, res) => {
     const { categoria, desde, hasta } = req.query;
-    const where = {};
+    let conditions = [];
 
-    if (categoria) where.categoria = categoria;
-    if (desde && hasta) {
-        where.fecha = {
-            [Op.between]: [desde, hasta],
-        };
-    }
+    if (categoria) conditions.push(eq(gastos.categoria, categoria));
+    if (desde && hasta) conditions.push(between(gastos.fecha, desde, hasta));
 
-    const gastos = await Gasto.findAll({ where, order: [["fecha", "DESC"]] });
-    res.json(gastos);
-});
+    const filter = conditions.length > 0 ? and(...conditions) : undefined;
+    const result = filter
+        ? db.select().from(gastos).where(filter).orderBy(gastos.fecha, "desc").all()
+        : db.select().from(gastos).orderBy(gastos.fecha, "desc").all();
+    res.json(result);
+};
 
-const getGastoById = asyncHandler(async (req, res) => {
-    const gasto = await Gasto.findByPk(req.params.id);
+const getGastoById = async (req, res) => {
+    const gasto = db.select().from(gastos).where(eq(gastos.id, Number(req.params.id))).get();
     if (!gasto) {
         res.status(404);
         throw new Error("Gasto no encontrado");
     }
     res.json(gasto);
-});
+};
 
-const createGasto = asyncHandler(async (req, res) => {
+const createGasto = async (req, res) => {
     const { descripcion, categoria, monto, fecha, comprobante } = req.body;
-    const gasto = await Gasto.create({
-        descripcion,
-        categoria,
-        monto,
-        fecha,
-        comprobante,
-    });
+    const gasto = db.insert(gastos).values({
+        descripcion, categoria, monto: Number(monto), fecha, comprobante,
+        createdAt: now(), updatedAt: now(),
+    }).returning().get();
     res.status(201).json(gasto);
-});
+};
 
-const updateGasto = asyncHandler(async (req, res) => {
-    const gasto = await Gasto.findByPk(req.params.id);
+const updateGasto = async (req, res) => {
+    const gasto = db.select().from(gastos).where(eq(gastos.id, Number(req.params.id))).get();
     if (!gasto) {
         res.status(404);
         throw new Error("Gasto no encontrado");
     }
     const { descripcion, categoria, monto, fecha, comprobante } = req.body;
-    await gasto.update({ descripcion, categoria, monto, fecha, comprobante });
-    res.json(gasto);
-});
+    db.update(gastos).set({
+        descripcion, categoria, monto: Number(monto), fecha, comprobante,
+        updatedAt: now(),
+    }).where(eq(gastos.id, Number(req.params.id))).run();
+    const updated = db.select().from(gastos).where(eq(gastos.id, Number(req.params.id))).get();
+    res.json(updated);
+};
 
-const deleteGasto = asyncHandler(async (req, res) => {
-    const gasto = await Gasto.findByPk(req.params.id);
+const deleteGasto = async (req, res) => {
+    const gasto = db.select().from(gastos).where(eq(gastos.id, Number(req.params.id))).get();
     if (!gasto) {
         res.status(404);
         throw new Error("Gasto no encontrado");
     }
-    await gasto.destroy();
+    db.delete(gastos).where(eq(gastos.id, Number(req.params.id))).run();
     res.json({ message: "Gasto eliminado" });
-});
+};
 
 module.exports = { getGastos, getGastoById, createGasto, updateGasto, deleteGasto };

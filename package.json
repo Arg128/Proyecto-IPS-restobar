@@ -6,7 +6,8 @@
     "start": "turbo run start",
     "lint": "turbo run lint",
     "db:migrate": "pnpm --filter @restobar/database db:migrate",
-    "db:seed": "pnpm --filter @restobar/database db:seed"
+    "db:seed": "pnpm --filter @restobar/database db:seed",
+    "db:generate": "pnpm --filter @restobar/database db:generate"
   },
   "devDependencies": {
     "turbo": "latest"

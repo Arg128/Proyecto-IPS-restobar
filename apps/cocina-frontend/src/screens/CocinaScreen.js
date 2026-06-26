@@ -108,6 +108,7 @@ const CocinaScreen = () => {
     const handleLogout = (e) => {
         e.preventDefault();
         dispatch(logout());
+        window.location.reload();
     };
 
     const productosEnCola = new Set(
@@ -128,6 +129,11 @@ const CocinaScreen = () => {
                             <i className="fas fa-book" /> Menú
                         </Link>
                     </li>
+                    <li className="nav-item ml-1">
+                        <Link to="/productos" className="nav-link btn btn-outline-success">
+                            <i className="fas fa-boxes" /> Productos
+                        </Link>
+                    </li>
                     <li className="nav-item">
                         <span
                             style={{ cursor: "pointer" }}
@@ -141,7 +147,7 @@ const CocinaScreen = () => {
                 </ul>
             </nav>
 
-            <div className="content-wrapper" style={{ marginLeft: 0 }}>
+            <div className="content-wrapper" style={{ marginLeft: 0 , height: '100%'}}>
                 <section className="content-header">
                     <div className="container-fluid">
                         <div className="row mb-2">
@@ -163,9 +169,9 @@ const CocinaScreen = () => {
                 )}
 
                 <section className="content">
-                    <div className="container-fluid">
-                        <div className="row">
-                            <div className="col-12 col-lg-4">
+                    <div className="container-fluid justify-space-evenly">
+                        <div className="col mtb-19 ptb-10 justify-content-between">
+                            <div className="col-12 col-lg-auto mb-3">
                                 <div className="card card-info">
                                     <div className="card-header">
                                         <h3 className="card-title">
@@ -221,7 +227,7 @@ const CocinaScreen = () => {
                                 </div>
                             </div>
 
-                            <div className="col-12 col-lg-5">
+                            <div className="col-12 col-lg-auto row-lg-3 mb-3">
                                     <div className="card card-warning">
                                     <div className="card-header">
                                         <h3 className="card-title">
@@ -247,7 +253,7 @@ const CocinaScreen = () => {
                                 </div>
                             </div>
 
-                            <div className="col-12 col-lg-3">
+                            <div className="col-12 col-lg-auto mb-3">
                                     <div className="card card-success">
                                     <div className="card-header">
                                         <h3 className="card-title">

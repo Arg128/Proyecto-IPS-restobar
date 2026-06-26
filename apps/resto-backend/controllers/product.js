@@ -1,94 +1,88 @@
-const asyncHandler = require("express-async-handler");
-const { Product, Category } = require("../models");
-const { Op } = require("sequelize");
+const { eq, or, like, count } = require("drizzle-orm");
+const { db, now, products, categories } = require("@restobar/database");
 
-exports.createProduct = asyncHandler(async (req, res) => {
+exports.createProduct = async (req, res) => {
     const { name, price, stock, categoryId } = req.body;
-    const category = await Category.findByPk(categoryId);
+    const cat = db.select().from(categories).where(eq(categories.id, Number(categoryId))).get();
 
-    if (category) {
-        createdProduct = await category.createProduct({ name, price, stock });
-        res.json(createdProduct);
+    if (cat) {
+        const created = db.insert(products).values({
+            name, price: Number(price), stock: stock || 0,
+            categoryId: Number(categoryId), createdAt: now(), updatedAt: now(),
+        }).returning().get();
+        res.json(created);
     } else {
         res.status(404);
         throw new Error("Category not found");
     }
-});
+};
 
-exports.getProducts = asyncHandler(async (req, res) => {
+exports.getProducts = async (req, res) => {
     const pageSize = 5;
     const page = Number(req.query.pageNumber) || 1;
+    const keyword = req.query.keyword;
 
-    const keyword = req.query.keyword ? req.query.keyword : null;
-
-    let options = {
-        include: [{ model: Category, as: "category" }],
-        attributes: {
-            exclude: ["categoryId", "updatedAt"],
-        },
-
-        offset: pageSize * (page - 1),
-        limit: pageSize,
-    };
+    let query = db.select().from(products).limit(pageSize).offset(pageSize * (page - 1));
+    let countQuery = db.select({ total: count() }).from(products);
 
     if (keyword) {
-        options = {
-            ...options,
-            where: {
-                [Op.or]: [
-                    { id: { [Op.like]: `%${keyword}%` } },
-                    { name: { [Op.like]: `%${keyword}%` } },
-                    { price: keyword },
-                    { "$category.name$": { [Op.like]: `%${keyword}%` } },
-                ],
-            },
-        };
+        const pattern = `%${keyword}%`;
+        const filter = or(like(products.name, pattern), like(products.id, pattern));
+        query = query.where(filter);
+        countQuery = countQuery.where(filter);
     }
-    const count = await Product.count({ ...options });
-    const products = await Product.findAll({ ...options });
 
-    res.json({ products, page, pages: Math.ceil(count / pageSize) });
-});
+    const result = query.all();
+    const total = countQuery.get();
 
-exports.getProduct = asyncHandler(async (req, res) => {
-    const product = await Product.findByPk(req.params.id, {
-        include: [{ model: Category, as: "category" }],
+    const withCategory = result.map(p => {
+        const cat = p.categoryId ? db.select().from(categories).where(eq(categories.id, p.categoryId)).get() : null;
+        return { ...p, category: cat || null };
     });
 
+    res.json({ products: withCategory, page, pages: Math.ceil(total.total / pageSize) });
+};
+
+exports.getProduct = async (req, res) => {
+    const product = db.select().from(products).where(eq(products.id, Number(req.params.id))).get();
+
     if (product) {
-        res.json(product);
+        const cat = product.categoryId ? db.select().from(categories).where(eq(categories.id, product.categoryId)).get() : null;
+        res.json({ ...product, category: cat || null });
     } else {
         res.status(404);
         throw new Error("Product not found");
     }
-});
+};
 
-exports.updateProduct = asyncHandler(async (req, res) => {
+exports.updateProduct = async (req, res) => {
     const { name, price, stock, category } = req.body;
-
-    const product = await Product.findByPk(req.params.id);
+    const product = db.select().from(products).where(eq(products.id, Number(req.params.id))).get();
 
     if (product) {
-        product.name = name;
-        product.price = price;
-        product.stock = stock;
-        product.categoryId = category;
-        const updatedProduct = await product.save();
-        res.json(updatedProduct);
+        db.update(products).set({
+            name: name || product.name,
+            price: price !== undefined ? Number(price) : product.price,
+            stock: stock !== undefined ? stock : product.stock,
+            categoryId: category !== undefined ? Number(category) : product.categoryId,
+            updatedAt: now(),
+        }).where(eq(products.id, Number(req.params.id))).run();
+        const updated = db.select().from(products).where(eq(products.id, Number(req.params.id))).get();
+        res.json(updated);
     } else {
         res.status(404);
         throw new Error("Product not found");
     }
-});
+};
 
-exports.deleteProduct = asyncHandler(async (req, res) => {
-    const product = await Product.findByPk(req.params.id);
+exports.deleteProduct = async (req, res) => {
+    const product = db.select().from(products).where(eq(products.id, Number(req.params.id))).get();
 
     if (product) {
-        await product.destroy();
+        db.delete(products).where(eq(products.id, Number(req.params.id))).run();
         res.json({ message: "Product removed" });
     } else {
         res.status(404);
         throw new Error("Product not found");
     }
-});
+};

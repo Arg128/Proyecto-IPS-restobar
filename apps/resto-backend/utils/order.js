@@ -1,40 +1,34 @@
-const { Product, Table, Order } = require("../models");
+const { eq } = require("drizzle-orm");
+const { db, products, tables, orders, orderProducts } = require("@restobar/database");
 
 exports.stock = async (list) => {
-    for (let index = 0; index < list.length; index++) {
-        const productSearched = await Product.findByPk(list[index].id);
-        if (productSearched.stock < list[index].quantity) {
-            return false;
-        }
+    for (const item of list) {
+        const prod = db.select().from(products).where(eq(products.id, Number(item.id))).get();
+        if (!prod || prod.stock < item.quantity) return false;
     }
     return true;
 };
 
 exports.updateTable = async (id, occupied) => {
-    const table = await Table.findByPk(id);
-    table.occupied = occupied;
-    await table.save();
+    db.update(tables).set({ occupied }).where(eq(tables.id, Number(id))).run();
 };
 
-exports.addProductsInOrder = async (order, products) => {
-    products.forEach(async (product) => {
-        await order.addProduct(product.id, {
-            through: { quantity: product.quantity },
-        });
-    });
+exports.addProductsInOrder = async (order, prods) => {
+    for (const p of prods) {
+        db.insert(orderProducts).values({
+            orderId: order.id,
+            productId: Number(p.id),
+            quantity: p.quantity || 1,
+        }).run();
+    }
 };
 
-exports.updateProductsStock = async (products, condition) => {
-    await products.forEach(async (product) => {
-        const productToUpdate = await Product.findByPk(product.id);
-
-        if (productToUpdate) {
-            if (condition >= 1) {
-                productToUpdate.stock += product.quantity;
-            } else {
-                productToUpdate.stock -= product.quantity;
-            }
-            await productToUpdate.save();
+exports.updateProductsStock = async (prods, condition) => {
+    for (const p of prods) {
+        const prod = db.select().from(products).where(eq(products.id, Number(p.id))).get();
+        if (prod) {
+            const delta = condition >= 1 ? p.quantity : -p.quantity;
+            db.update(products).set({ stock: prod.stock + delta }).where(eq(products.id, Number(p.id))).run();
         }
-    });
+    }
 };

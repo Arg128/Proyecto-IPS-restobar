@@ -9,7 +9,12 @@ dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 
 const app = express();
 
-app.use(cors({ origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(",") : "*" }));
+app.use(cors({
+    origin: process.env.NODE_ENV === "development"
+        ? true
+        : process.env.HOST || "*",
+    credentials: true,
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -29,10 +34,11 @@ if (!process.env.VERCEL) {
 }
 
 /* ========== cocina routes ========== */
-app.use("/api/coccion/users", require("./routes/coccion-user"));
+// app.use("/api/coccion/users", require("./routes/coccion-user"));
 app.use("/api/coccion/pedidos", require("./routes/coccion-pedidos"));
 app.use("/api/coccion/tiempos", require("./routes/coccion-tiempos"));
 app.use("/api/coccion/recetas", require("./routes/coccion-receta"));
+app.use("/api/coccion/productos", require("./routes/productos"));
 
 /* ========== caja routes ========== */
 app.use("/api/caja/pagos", require("./routes/caja-pagos"));

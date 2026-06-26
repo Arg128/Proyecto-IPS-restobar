@@ -1,44 +1,48 @@
-const asyncHandler = require("express-async-handler");
-const { User } = require("../models");
-const generateToken = require("../utils/generateToken");
+const { eq, or, like } = require("drizzle-orm");
 const bcrypt = require("bcrypt");
-const { Op } = require("sequelize");
+const { db, now, users } = require("@restobar/database");
+const generateToken = require("../utils/generateToken");
 
-exports.registerUser = asyncHandler(async (req, res) => {
+exports.registerUser = async (req, res) => {
     const { name, email, password, isAdmin } = req.body;
 
-    const userExists = await User.findOne({ where: { email } });
-    if (userExists) {
+    const existing = db.select().from(users).where(eq(users.email, String(email))).get();
+    if (existing) {
         res.status(400);
         throw new Error("User already exists");
     }
 
-    const user = await User.scope("withPassword").create({
+    const salt = bcrypt.genSaltSync(10);
+    const hashedPassword = bcrypt.hashSync(password, salt);
+
+    const user = db.insert(users).values({
         name,
         email,
-        password,
-        isAdmin,
+        password: hashedPassword,
+        isAdmin: isAdmin || false,
+        createdAt: now(),
+        updatedAt: now(),
+    }).returning().get();
+
+    res.status(201).json({
+        _id: user.id,
+        name: user.name,
+        email: user.email,
+        isAdmin: user.isAdmin,
+        image: user.image,
     });
-    if (user) {
-        res.status(201).json({
-            _id: user._id,
-            name: user.name,
-            email: user.email,
-            isAdmin: user.isAdmin,
-            image: user.image,
-        });
-    } else {
-        res.status(400);
-        throw new Error("Invalid user data");
-    }
-});
+};
 
-exports.login = asyncHandler(async (req, res) => {
+exports.login = async (req, res) => {
     const { email, password } = req.body;
+    console.log(email)
+    console.log(password)
 
-    const user = await User.scope("withPassword").findOne({ where: { email } });
-
-    if (user && (await user.validPassword(password))) {
+    const user = await db.select().from(users).where(eq(users.email, email)).get();
+    console.log(password)
+    console.log(user)
+    console.log(user.password)
+    if (user && bcrypt.compareSync(password, user.password)) {
         res.json({
             _id: user.id,
             name: user.name,
@@ -52,108 +56,96 @@ exports.login = asyncHandler(async (req, res) => {
         res.status(401);
         throw new Error("Invalid email or password");
     }
-});
+};
 
-exports.getUser = asyncHandler(async (req, res) => {
-    const user = await User.findByPk(req.params.id);
+exports.getUser = async (req, res) => {
+    const user = db.select().from(users).where(eq(users.id, Number(req.params.id))).get();
 
     if (user) {
-        res.json(user);
+        const { password, ...safe } = user;
+        res.json(safe);
     } else {
         res.status(404);
         throw new Error("User not found");
     }
-});
+};
 
-exports.getUsers = asyncHandler(async (req, res) => {
+exports.getUsers = async (req, res) => {
     const pageSize = 5;
     const page = Number(req.query.pageNumber) || 1;
-    const keyword = req.query.keyword ? req.query.keyword : null;
+    const keyword = req.query.keyword;
 
-    let options = {
-        attributes: {
-            exclude: ["updatedAt"],
-        },
-        offset: pageSize * (page - 1),
-        limit: pageSize,
-    };
+    let query = db.select().from(users).limit(pageSize).offset(pageSize * (page - 1));
+    let countQuery = db.select({ count: require("drizzle-orm").count() }).from(users);
 
     if (keyword) {
-        options = {
-            ...options,
-            where: {
-                [Op.or]: [
-                    { id: { [Op.like]: `%${keyword}%` } },
-                    { name: { [Op.like]: `%${keyword}%` } },
-                    { email: { [Op.like]: `%${keyword}%` } },
-                ],
-            },
-        };
+        const pattern = `%${keyword}%`;
+        const filter = or(like(users.name, pattern), like(users.email, pattern));
+        query = query.where(filter);
+        countQuery = countQuery.where(filter);
     }
 
-    const count = await User.count({});
-    const users = await User.findAll({});
+    const result = query.all();
+    const total = countQuery.get();
 
-    res.json({ users, page, pages: Math.ceil(count / pageSize) });
-});
+    res.json({ users: result, page, pages: Math.ceil(total.count / pageSize) });
+};
 
-exports.updateUser = asyncHandler(async (req, res) => {
+exports.updateUser = async (req, res) => {
     const { name, email, password, isAdmin, avatar } = req.body;
+    const user = db.select().from(users).where(eq(users.id, Number(req.params.id))).get();
 
-    const user = await User.findByPk(req.params.id);
-
-    const salt = bcrypt.genSaltSync(10);
-
-    if (user) {
-        user.name = name;
-        user.image = avatar ? "/avatar.png" : user.image;
-        user.email = email;
-        user.password = password
-            ? bcrypt.hashSync(password, salt)
-            : user.password;
-        user.isAdmin = user.isAdmin
-            ? user.isAdmin
-            : isAdmin
-            ? isAdmin
-            : user.isAdmin;
-        const updatedUser = await user.save();
-        res.json(updatedUser);
-    } else {
+    if (!user) {
         res.status(404);
         throw new Error("User not found");
     }
-});
-
-exports.updateProfile = asyncHandler(async (req, res) => {
-    const { id, name, email, password, passwordCheck, image } = req.body;
-
-    const user = await User.scope("withPassword").findByPk(req.params.id);
 
     const salt = bcrypt.genSaltSync(10);
+    const updates = {
+        name: name || user.name,
+        email: email || user.email,
+        image: avatar ? "/avatar.png" : user.image,
+        password: password ? bcrypt.hashSync(password, salt) : user.password,
+        isAdmin: isAdmin !== undefined ? isAdmin : user.isAdmin,
+        updatedAt: now(),
+    };
 
-    if (user && (await user.validPassword(passwordCheck))) {
-        user.name = name;
-        user.email = email;
-        user.image = image ? image : user.image;
-        user.password = password
-            ? bcrypt.hashSync(password, salt)
-            : user.password;
-        const updatedUser = await user.save();
-        res.json(updatedUser);
-    } else {
+    db.update(users).set(updates).where(eq(users.id, Number(req.params.id))).run();
+    const updated = db.select().from(users).where(eq(users.id, Number(req.params.id))).get();
+    res.json(updated);
+};
+
+exports.updateProfile = async (req, res) => {
+    const { name, email, password, passwordCheck, image } = req.body;
+    const user = db.select().from(users).where(eq(users.id, Number(req.params.id))).get();
+
+    if (!user || !bcrypt.compareSync(passwordCheck, user.password)) {
         res.status(404);
         throw new Error("Invalid Password");
     }
-});
 
-exports.deleteUser = asyncHandler(async (req, res) => {
-    const user = await User.findByPk(req.params.id);
+    const salt = bcrypt.genSaltSync(10);
+    const updates = {
+        name: name || user.name,
+        email: email || user.email,
+        image: image || user.image,
+        password: password ? bcrypt.hashSync(password, salt) : user.password,
+        updatedAt: now(),
+    };
+
+    db.update(users).set(updates).where(eq(users.id, Number(req.params.id))).run();
+    const updated = db.select().from(users).where(eq(users.id, Number(req.params.id))).get();
+    res.json(updated);
+};
+
+exports.deleteUser = async (req, res) => {
+    const user = db.select().from(users).where(eq(users.id, Number(req.params.id))).get();
 
     if (user) {
-        await user.destroy();
+        db.delete(users).where(eq(users.id, Number(req.params.id))).run();
         res.json({ message: "User removed" });
     } else {
         res.status(404);
         throw new Error("User not found");
     }
-});
+};
