@@ -21,6 +21,7 @@
     "DB_PORT",
     "DB_DIALECT",
     "JWT_SECRET",
+    "CORS_ORIGINS",
     "VERCEL"
   ],
   "$schema": "https://turbo.build/schema.json",
