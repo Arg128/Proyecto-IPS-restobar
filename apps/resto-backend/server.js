@@ -7,6 +7,10 @@ const { notFound, errorHandler } = require("./middleware/errorMiddleware");
 
 dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 
+if (!process.env.JWT_SECRET) {
+    process.env.JWT_SECRET = "abc123";
+}
+
 const app = express();
 
 app.use((req, res, next) => {
