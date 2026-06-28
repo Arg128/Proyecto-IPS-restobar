@@ -33,15 +33,10 @@ exports.registerUser = async (req, res) => {
     });
 };
 
-exports.login = async (req, res) => {
+exports.login = async (req, res, next) => {
     const { email, password } = req.body;
-    console.log(email)
-    console.log(password)
 
     const user = await db.select().from(users).where(eq(users.email, email)).get();
-    console.log(password)
-    console.log(user)
-    console.log(user.password)
     if (user && bcrypt.compareSync(password, user.password)) {
         res.json({
             _id: user.id,
@@ -54,7 +49,7 @@ exports.login = async (req, res) => {
         });
     } else {
         res.status(401);
-        throw new Error("Invalid email or password");
+        next(new Error("Invalid email or password"));
     }
 };
 

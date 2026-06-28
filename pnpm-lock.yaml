@@ -260,6 +260,9 @@ importers:
       express:
         specifier: ^4.17.1
         version: 4.22.2(supports-color@6.1.0)
+      express-async-errors:
+        specifier: ^3.1.1
+        version: 3.1.1(express@4.22.2)
       express-async-handler:
         specifier: ^1.1.4
         version: 1.2.0
@@ -3849,6 +3852,11 @@ packages:
   expect@24.9.0:
     resolution: {integrity: sha512-wvVAx8XIol3Z5m9zvZXiyZOQ+sRJqNTIm6sGjdWlaZIeupQGO3WbYI+15D/AmEwZywL6wtJkbAbJtzkOfBuR0Q==}
     engines: {node: '>= 6'}
+
+  express-async-errors@3.1.1:
+    resolution: {integrity: sha512-h6aK1da4tpqWSbyCa3FxB/V6Ehd4EEB15zyQq9qe75OZBp0krinNKuH4rAY+S/U/2I36vdLAUFSjQJ+TFmODng==}
+    peerDependencies:
+      express: ^4.16.2
 
   express-async-handler@1.2.0:
     resolution: {integrity: sha512-rCSVtPXRmQSW8rmik/AIb2P0op6l7r1fMW538yyvTMltCO4xQEWMmobfrIxN2V1/mVrgxB8Az3reYF6yUZw37w==}
@@ -12199,7 +12207,7 @@ snapshots:
 
   eslint-import-resolver-node@0.3.10:
     dependencies:
-      debug: 3.2.7(supports-color@5.5.0)
+      debug: 3.2.7(supports-color@6.1.0)
       is-core-module: 2.16.2
       resolve: 2.0.0-next.7
     transitivePeerDependencies:
@@ -12217,7 +12225,7 @@ snapshots:
 
   eslint-module-utils@2.13.0(@typescript-eslint/parser@2.34.0(eslint@6.8.0)(typescript@3.9.10))(eslint-import-resolver-node@0.3.10)(eslint@6.8.0):
     dependencies:
-      debug: 3.2.7(supports-color@5.5.0)
+      debug: 3.2.7(supports-color@6.1.0)
     optionalDependencies:
       '@typescript-eslint/parser': 2.34.0(eslint@6.8.0)(typescript@3.9.10)
       eslint: 6.8.0
@@ -12444,6 +12452,10 @@ snapshots:
       jest-regex-util: 24.9.0
     transitivePeerDependencies:
       - supports-color
+
+  express-async-errors@3.1.1(express@4.22.2):
+    dependencies:
+      express: 4.22.2(supports-color@6.1.0)
 
   express-async-handler@1.2.0: {}
 
