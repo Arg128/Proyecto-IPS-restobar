@@ -9,15 +9,8 @@ dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 
 const app = express();
 
-const allowedOrigins = process.env.CORS_ORIGINS
-    ? process.env.CORS_ORIGINS.split(",").map(s => s.trim())
-    : process.env.NODE_ENV === "development"
-        ? true
-        : process.env.HOST || true;
-
 app.use(cors({
-    origin: allowedOrigins,
-    credentials: true,
+    origin: "*",
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
