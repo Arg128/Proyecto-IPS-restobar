@@ -74,7 +74,7 @@ Centraliza todas las operaciones financieras del restaurante. Soporta pagos por 
 
 | Descripción | Captura |
 |---|---|
-| Panel principal: resumen de ingresos, gastos, ganancias y pagos | ![cap1](./docs/screenshots/caja/cap1.png) |
+| Panel principal: resumen de ingresos, gastos, ganancias y pagos | ![cap1](https://ibb.co/v4MG3Vv3) |
 | Gestión de pagos: registro y consulta de transacciones | ![cap2](./docs/screenshots/caja/cap2.png) |
 | Pantalla de generación de comprobantes de pago | ![cap3](./docs/screenshots/caja/cap3.png) |
 | Formulario de emisión de boletas o facturas | ![cap4](./docs/screenshots/caja/cap4.png) |
