@@ -32,7 +32,7 @@ exports.getProducts = async (req, res) => {
         countQuery = countQuery.where(filter);
     }
 
-    const result = query.all();
+    const result = await query.all();
     const total = countQuery.get();
 
     const withCategory = result.map(p => {

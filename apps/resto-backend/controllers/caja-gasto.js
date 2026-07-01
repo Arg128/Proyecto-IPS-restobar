@@ -10,8 +10,8 @@ const getGastos = async (req, res) => {
 
     const filter = conditions.length > 0 ? and(...conditions) : undefined;
     const result = filter
-        ? db.select().from(gastos).where(filter).orderBy(gastos.fecha, "desc").all()
-        : db.select().from(gastos).orderBy(gastos.fecha, "desc").all();
+        ? await db.select().from(gastos).where(filter).orderBy(gastos.fecha, "desc").all()
+        : await db.select().from(gastos).orderBy(gastos.fecha, "desc").all();
     res.json(result);
 };
 

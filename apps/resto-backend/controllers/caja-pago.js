@@ -2,7 +2,7 @@ const { eq } = require("drizzle-orm");
 const { db, now, pagos, facturas } = require("@restobar/database");
 
 const getPagos = async (req, res) => {
-    const result = db.select().from(pagos).all();
+    const result = await db.select().from(pagos).all();
     const withFactura = result.map(p => {
         const f = db.select().from(facturas).where(eq(facturas.pago_id, p.id)).get();
         return { ...p, Factum: f || null };

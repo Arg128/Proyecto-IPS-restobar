@@ -22,14 +22,14 @@ exports.getTables = async (req, res) => {
         countQuery = countQuery.where(filter);
     }
 
-    const result = query.all();
+    const result = await query.all();
     const total = countQuery.get();
 
     res.json({ tables: result, page, pages: Math.ceil(total.total / pageSize) });
 };
 
 exports.getAllTables = async (req, res) => {
-    const result = db.select().from(tables).all();
+    const result = await db.select().from(tables).all();
     res.json(result);
 };
 

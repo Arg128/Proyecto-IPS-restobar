@@ -3,7 +3,7 @@ const { db, pagos, facturas, gastos } = require("@restobar/database");
 
 const getIngresos = async (req, res) => {
     const { periodo } = req.query;
-    const all = db.select().from(pagos).where(eq(pagos.estado, "completado")).orderBy(pagos.createdAt, "asc").all();
+    const all = await db.select().from(pagos).where(eq(pagos.estado, "completado")).orderBy(pagos.createdAt, "asc").all();
 
     const grouped = {};
     for (const p of all) {
@@ -23,7 +23,7 @@ const getIngresos = async (req, res) => {
 };
 
 const getMetodosPago = async (req, res) => {
-    const all = db.select().from(pagos).where(eq(pagos.estado, "completado")).all();
+    const all = await db.select().from(pagos).where(eq(pagos.estado, "completado")).all();
     const grouped = {};
 
     for (const p of all) {
@@ -37,7 +37,7 @@ const getMetodosPago = async (req, res) => {
 };
 
 const getResumenGastos = async (req, res) => {
-    const all = db.select().from(gastos).all();
+    const all = await db.select().from(gastos).all();
     const grouped = {};
 
     for (const g of all) {

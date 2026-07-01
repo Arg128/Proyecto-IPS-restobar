@@ -2,7 +2,7 @@ const { eq } = require("drizzle-orm");
 const { db, now, pedidos } = require("@restobar/database");
 
 const getPedidos = async (req, res) => {
-    const result = db.select().from(pedidos).orderBy(pedidos.createdAt, "desc").all();
+    const result = await db.select().from(pedidos).orderBy(pedidos.createdAt, "desc").all();
     res.json(result);
 };
 

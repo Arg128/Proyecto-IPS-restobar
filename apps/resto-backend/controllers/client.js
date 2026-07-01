@@ -29,7 +29,7 @@ exports.getClients = async (req, res) => {
         countQuery = countQuery.where(filter);
     }
 
-    const result = query.all();
+    const result = await query.all();
     const total = countQuery.get();
 
     res.json({ clients: result, page, pages: Math.ceil(total.total / pageSize) });

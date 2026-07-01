@@ -4,7 +4,7 @@ const csv = require("csv-parser");
 const { Readable } = require("stream");
 
 exports.obtenerRecetas = async (req, res) => {
-    const result = db.select().from(recetas).all();
+    const result = await db.select().from(recetas).all();
     const withProduct = result.map(r => {
         const prod = r.productId ? db.select().from(products).where(eq(products.id, r.productId)).get() : null;
         return { ...r, producto: prod || null };
@@ -13,7 +13,7 @@ exports.obtenerRecetas = async (req, res) => {
 };
 
 exports.obtenerRecetaDeProducto = async (req, res) => {
-    const result = db.select().from(recetas).where(eq(recetas.productId, Number(req.params.productId))).all();
+    const result = await db.select().from(recetas).where(eq(recetas.productId, Number(req.params.productId))).all();
     const withProduct = result.map(r => {
         const prod = db.select().from(products).where(eq(products.id, r.productId)).get();
         return { ...r, producto: prod || null };
@@ -39,7 +39,7 @@ exports.guardarReceta = async (req, res) => {
         }
     }
 
-    const creados = db.select().from(recetas).where(eq(recetas.productId, Number(productId))).all();
+    const creados = await db.select().from(recetas).where(eq(recetas.productId, Number(productId))).all();
     res.json(creados);
 };
 

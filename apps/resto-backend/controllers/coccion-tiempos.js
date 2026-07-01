@@ -2,7 +2,7 @@ const { eq } = require("drizzle-orm");
 const { db, tiemposCoccion, eventosCoccion, products } = require("@restobar/database");
 
 exports.obtenerTiempos = async (req, res) => {
-    const result = db.select().from(tiemposCoccion).all();
+    const result = await db.select().from(tiemposCoccion).all();
     const withProduct = result.map(t => {
         const prod = t.productId ? db.select().from(products).where(eq(products.id, t.productId)).get() : null;
         return { ...t, producto: prod || null };
@@ -27,7 +27,7 @@ exports.actualizarTiempo = async (req, res) => {
 };
 
 exports.obtenerEventosDeProducto = async (req, res) => {
-    const result = db.select().from(eventosCoccion).where(eq(eventosCoccion.productId, Number(req.params.productId))).orderBy(eventosCoccion.orden, "asc").all();
+    const result = await db.select().from(eventosCoccion).where(eq(eventosCoccion.productId, Number(req.params.productId))).orderBy(eventosCoccion.orden, "asc").all();
     res.json(result);
 };
 
@@ -48,16 +48,16 @@ exports.configurarEventos = async (req, res) => {
         }
     }
 
-    const creados = db.select().from(eventosCoccion).where(eq(eventosCoccion.productId, Number(productId))).orderBy(eventosCoccion.orden, "asc").all();
+    const creados = await db.select().from(eventosCoccion).where(eq(eventosCoccion.productId, Number(productId))).orderBy(eventosCoccion.orden, "asc").all();
     res.json(creados);
 };
 
 exports.obtenerProductos = async (req, res) => {
-    const result = db.select().from(products).all();
-    const withRelations = result.map(p => {
+    const result = await db.select().from(products).all();
+    const withRelations = await Promise.all(result.map(async p => {
         const tc = db.select().from(tiemposCoccion).where(eq(tiemposCoccion.productId, p.id)).get() || null;
-        const ev = db.select().from(eventosCoccion).where(eq(eventosCoccion.productId, p.id)).orderBy(eventosCoccion.orden, "asc").all();
+        const ev = await db.select().from(eventosCoccion).where(eq(eventosCoccion.productId, p.id)).orderBy(eventosCoccion.orden, "asc").all();
         return { ...p, tiemposCoccion: tc, eventosCoccion: ev };
-    });
+    }));
     res.json(withRelations);
 };

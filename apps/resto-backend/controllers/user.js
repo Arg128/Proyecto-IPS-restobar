@@ -80,7 +80,7 @@ exports.getUsers = async (req, res) => {
         countQuery = countQuery.where(filter);
     }
 
-    const result = query.all();
+    const result = await query.all();
     const total = countQuery.get();
 
     res.json({ users: result, page, pages: Math.ceil(total.count / pageSize) });

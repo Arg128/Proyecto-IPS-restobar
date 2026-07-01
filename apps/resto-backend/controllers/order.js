@@ -58,7 +58,7 @@ exports.getOrders = async (req, res) => {
         countQuery = countQuery.where(filter);
     }
 
-    const result = query.all();
+    const result = await query.all();
     const total = countQuery.get();
 
     const withRelations = result.map(o => {
@@ -76,7 +76,7 @@ exports.getOrder = async (req, res) => {
     if (order) {
         const client = order.clientId ? db.select().from(clients).where(eq(clients.id, order.clientId)).get() : null;
         const table = order.tableId ? db.select().from(tables).where(eq(tables.id, order.tableId)).get() : null;
-        const orderProds = db.select().from(orderProducts).where(eq(orderProducts.orderId, order.id)).all();
+        const orderProds = await db.select().from(orderProducts).where(eq(orderProducts.orderId, order.id)).all();
         const productsWithQty = orderProds.map(op => {
             const prod = db.select().from(products).where(eq(products.id, op.productId)).get();
             return { ...prod, quantity: op.quantity };
@@ -135,7 +135,7 @@ exports.updateOrder = async (req, res) => {
     }
 
     if (prods && Number(total) !== order.total) {
-        const oldProds = db.select().from(orderProducts).where(eq(orderProducts.orderId, order.id)).all();
+        const oldProds = await db.select().from(orderProducts).where(eq(orderProducts.orderId, order.id)).all();
         for (const op of oldProds) {
             const prod = db.select().from(products).where(eq(products.id, op.productId)).get();
             if (prod) db.update(products).set({ stock: prod.stock + op.quantity }).where(eq(products.id, op.productId)).run();
@@ -187,14 +187,14 @@ exports.getStatistics = async (req, res) => {
     const todayStartStr = TODAY_START.toISOString();
     const nowStr = NOW.toISOString();
 
-    const sales = db.select().from(orders).where(eq(orders.isPaid, true)).limit(5).all();
+    const sales = await db.select().from(orders).where(eq(orders.isPaid, true)).limit(5).all();
 
     const totalSales = db.select({ total: sum(orders.total) }).from(orders).where(eq(orders.isPaid, true)).get();
     const deliveriesMade = db.select({ total: count() }).from(orders).where(and(eq(orders.delivery, true), eq(orders.isPaid, true))).get();
     const totalOrdersPaid = db.select({ total: count() }).from(orders).where(eq(orders.isPaid, true)).get();
     const todaySales = db.select({ total: sum(orders.total) }).from(orders)
         .where(and(eq(orders.isPaid, true), gte(orders.updatedAt, todayStartStr))).get();
-    const unpaidOrders = db.select().from(orders).where(eq(orders.isPaid, false)).all();
+    const unpaidOrders = await db.select().from(orders).where(eq(orders.isPaid, false)).all();
 
     res.json({
         statistics: {

@@ -10,8 +10,8 @@ const getFacturas = async (req, res) => {
 
     const filter = conditions.length > 0 ? and(...conditions) : undefined;
     const result = filter
-        ? db.select().from(facturas).where(filter).all()
-        : db.select().from(facturas).all();
+        ? await db.select().from(facturas).where(filter).all()
+        : await db.select().from(facturas).all();
 
     const withPago = result.map(f => {
         const p = db.select().from(pagos).where(eq(pagos.id, f.pago_id)).get();
