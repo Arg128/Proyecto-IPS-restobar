@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
 import { Message } from "@restobar/ui";
@@ -25,9 +25,22 @@ const ProductosScreen = () => {
     const [stock, setStock] = useState("");
     const [categoriaId, setCategoriaId] = useState("");
 
+    const [nuevaCategoria, setNuevaCategoria] = useState("");
     const [csvFile, setCsvFile] = useState(null);
     const [importLoading, setImportLoading] = useState(false);
     const [modo, setModo] = useState("form");
+    const [dropdownOpen, setDropdownOpen] = useState(false);
+    const dropdownRef = useRef(null);
+
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+                setDropdownOpen(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
 
     useEffect(() => {
         cargarDatos();
@@ -71,6 +84,36 @@ const ProductosScreen = () => {
             setStock("");
             setCategoriaId("");
             cargarDatos();
+        } catch (err) {
+            setError(err.response?.data?.message || err.message);
+        }
+    };
+
+    const handleCrearCategoria = async () => {
+        limpiarMensajes();
+        if (!nuevaCategoria.trim()) {
+            setError("Escribe un nombre para la categoría");
+            return;
+        }
+        try {
+            const res = await axios.post("/api/categories", { name: nuevaCategoria.trim() }, config());
+            setSuccess(`Categoría "${await res.data.name}" creada`);
+            setNuevaCategoria("");
+            setCategoriaId("");
+            await cargarDatos();
+        } catch (err) {
+            setError(err.response?.data?.message || err.message);
+        }
+    };
+
+    const handleEliminarCategoria = async (id) => {
+        if (!window.confirm("¿Eliminar esta categoría?")) return;
+        limpiarMensajes();
+        try {
+            await axios.delete(`/api/categories/${id}`, config());
+            setSuccess("Categoría eliminada");
+            if (categoriaId === String(id)) setCategoriaId("");
+            await cargarDatos();
         } catch (err) {
             setError(err.response?.data?.message || err.message);
         }
@@ -135,13 +178,49 @@ const ProductosScreen = () => {
                 </div>
                 <div className="form-group">
                     <label>Categoría</label>
-                    <select className="form-control" value={categoriaId}
-                        onChange={(e) => setCategoriaId(e.target.value)}>
-                        <option value="">Sin categoría</option>
-                        {categorias.map((cat) => (
-                            <option key={cat.id} value={cat.id}>{cat.name}</option>
-                        ))}
-                    </select>
+                    {categoriaId === "" ? (
+                        <div className="input-group mb-2">
+                            <input type="text" className="form-control" value={nuevaCategoria}
+                                onChange={(e) => setNuevaCategoria(e.target.value)}
+                                placeholder="Nombre de la nueva categoría" />
+                            <div className="input-group-append">
+                                <button type="button" className="btn btn-success" onClick={handleCrearCategoria}>
+                                    <i className="fas fa-check" />
+                                </button>
+                                <button type="button" className="btn btn-secondary" onClick={() => setCategoriaId("")}>
+                                    <i className="fas fa-times" />
+                                </button>
+                            </div>
+                        </div>
+                    ) : null}
+                    <div className="dropdown" ref={dropdownRef}>
+                        <button className="form-control dropdown-toggle text-left" type="button"
+                            onClick={() => setDropdownOpen(!dropdownOpen)}>
+                            {categoriaId
+                                ? categorias.find(c => c.id === parseInt(categoriaId))?.name
+                                : "Crear una categoría"}
+                        </button>
+                        {dropdownOpen && (
+                            <div className="dropdown-menu show" style={{ width: "100%", maxHeight: "250px", overflowY: "auto" }}>
+                                <button className="dropdown-item" type="button"
+                                    onClick={() => { setCategoriaId(""); setDropdownOpen(false); }}>
+                                    Crear una categoría
+                                </button>
+                                {categorias.map(cat => (
+                                    <div key={cat.id} className="dropdown-item d-flex justify-content-between align-items-center px-3">
+                                        <span style={{ cursor: "pointer", flex: 1 }}
+                                            onClick={() => { setCategoriaId(String(cat.id)); setDropdownOpen(false); }}>
+                                            {cat.name}
+                                        </span>
+                                        <button className="btn btn-sm btn-danger ml-2" type="button"
+                                            onClick={(e) => { e.stopPropagation(); handleEliminarCategoria(cat.id); }}>
+                                            <i className="fas fa-times" />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
                 </div>
                 <button type="submit" className="btn btn-primary btn-block">
                     <i className="fas fa-save" /> Guardar Producto

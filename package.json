@@ -13,6 +13,11 @@
     "turbo": "latest"
   },
   "packageManager": "pnpm@9.0.0",
+  "pnpm": {
+    "overrides": {
+      "jest": "24.9.0"
+    }
+  },
   "dependencies": {
     "@libsql/client": "^0.17.4",
     "@tursodatabase/database": "^0.6.1"

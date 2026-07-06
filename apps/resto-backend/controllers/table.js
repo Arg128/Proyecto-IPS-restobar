@@ -49,7 +49,7 @@ exports.updateTable = async (req, res) => {
     const table = db.select().from(tables).where(eq(tables.id, Number(req.params.id))).get();
 
     if (table) {
-        db.update(tables).set({
+        await db.update(tables).set({
             name: name !== undefined ? name : table.name,
             occupied: occupied !== undefined ? occupied : table.occupied,
             updatedAt: now(),
@@ -66,7 +66,7 @@ exports.deleteTable = async (req, res) => {
     const table = db.select().from(tables).where(eq(tables.id, Number(req.params.id))).get();
 
     if (table) {
-        db.delete(tables).where(eq(tables.id, Number(req.params.id))).run();
+        await db.delete(tables).where(eq(tables.id, Number(req.params.id))).run();
         res.json({ message: "Table removed" });
     } else {
         res.status(404);

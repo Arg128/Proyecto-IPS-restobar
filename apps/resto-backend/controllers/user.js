@@ -105,7 +105,7 @@ exports.updateUser = async (req, res) => {
         updatedAt: now(),
     };
 
-    db.update(users).set(updates).where(eq(users.id, Number(req.params.id))).run();
+    await db.update(users).set(updates).where(eq(users.id, Number(req.params.id))).run();
     const updated = db.select().from(users).where(eq(users.id, Number(req.params.id))).get();
     res.json(updated);
 };
@@ -128,7 +128,7 @@ exports.updateProfile = async (req, res) => {
         updatedAt: now(),
     };
 
-    db.update(users).set(updates).where(eq(users.id, Number(req.params.id))).run();
+    await db.update(users).set(updates).where(eq(users.id, Number(req.params.id))).run();
     const updated = db.select().from(users).where(eq(users.id, Number(req.params.id))).get();
     res.json(updated);
 };
@@ -137,7 +137,7 @@ exports.deleteUser = async (req, res) => {
     const user = db.select().from(users).where(eq(users.id, Number(req.params.id))).get();
 
     if (user) {
-        db.delete(users).where(eq(users.id, Number(req.params.id))).run();
+        await db.delete(users).where(eq(users.id, Number(req.params.id))).run();
         res.json({ message: "User removed" });
     } else {
         res.status(404);

@@ -40,7 +40,7 @@ const updateGasto = async (req, res) => {
         throw new Error("Gasto no encontrado");
     }
     const { descripcion, categoria, monto, fecha, comprobante } = req.body;
-    db.update(gastos).set({
+    await db.update(gastos).set({
         descripcion, categoria, monto: Number(monto), fecha, comprobante,
         updatedAt: now(),
     }).where(eq(gastos.id, Number(req.params.id))).run();
@@ -54,7 +54,7 @@ const deleteGasto = async (req, res) => {
         res.status(404);
         throw new Error("Gasto no encontrado");
     }
-    db.delete(gastos).where(eq(gastos.id, Number(req.params.id))).run();
+    await db.delete(gastos).where(eq(gastos.id, Number(req.params.id))).run();
     res.json({ message: "Gasto eliminado" });
 };
 

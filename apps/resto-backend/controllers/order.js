@@ -16,7 +16,7 @@ exports.createOrder = async (req, res) => {
     }).returning().get();
 
     for (const p of prods) {
-        db.insert(orderProducts).values({
+        await db.insert(orderProducts).values({
             orderId: created.id,
             productId: Number(p.id),
             quantity: p.quantity || 1,
@@ -24,12 +24,12 @@ exports.createOrder = async (req, res) => {
 
         const prod = db.select().from(products).where(eq(products.id, Number(p.id))).get();
         if (prod) {
-            db.update(products).set({ stock: prod.stock - (p.quantity || 1) }).where(eq(products.id, Number(p.id))).run();
+            await db.update(products).set({ stock: prod.stock - (p.quantity || 1) }).where(eq(products.id, Number(p.id))).run();
         }
     }
 
     if (!delivery && tableId) {
-        db.update(tables).set({ occupied: true }).where(eq(tables.id, Number(tableId))).run();
+        await db.update(tables).set({ occupied: true }).where(eq(tables.id, Number(tableId))).run();
     }
 
     res.status(201).json(created);
@@ -93,9 +93,9 @@ exports.updateOrderPay = async (req, res) => {
 
     if (order) {
         if (order.tableId) {
-            db.update(tables).set({ occupied: false }).where(eq(tables.id, order.tableId)).run();
+            await db.update(tables).set({ occupied: false }).where(eq(tables.id, order.tableId)).run();
         }
-        db.update(orders).set({ isPaid: !order.isPaid, updatedAt: now() }).where(eq(orders.id, Number(req.params.id))).run();
+        await db.update(orders).set({ isPaid: !order.isPaid, updatedAt: now() }).where(eq(orders.id, Number(req.params.id))).run();
         const updated = db.select().from(orders).where(eq(orders.id, Number(req.params.id))).get();
         res.json(updated);
     } else {
@@ -122,14 +122,14 @@ exports.updateOrder = async (req, res) => {
 
     if (order.tableId !== Number(tableId)) {
         if (!order.tableId && !delivery) {
-            db.update(tables).set({ occupied: true }).where(eq(tables.id, Number(tableId))).run();
+            await db.update(tables).set({ occupied: true }).where(eq(tables.id, Number(tableId))).run();
             updates.tableId = Number(tableId);
         } else if (order.tableId && delivery) {
-            db.update(tables).set({ occupied: false }).where(eq(tables.id, order.tableId)).run();
+            await db.update(tables).set({ occupied: false }).where(eq(tables.id, order.tableId)).run();
             updates.tableId = null;
         } else {
-            if (order.tableId) db.update(tables).set({ occupied: false }).where(eq(tables.id, order.tableId)).run();
-            if (tableId) db.update(tables).set({ occupied: true }).where(eq(tables.id, Number(tableId))).run();
+            if (order.tableId) await db.update(tables).set({ occupied: false }).where(eq(tables.id, order.tableId)).run();
+            if (tableId) await db.update(tables).set({ occupied: true }).where(eq(tables.id, Number(tableId))).run();
             updates.tableId = tableId ? Number(tableId) : null;
         }
     }
@@ -138,18 +138,18 @@ exports.updateOrder = async (req, res) => {
         const oldProds = await db.select().from(orderProducts).where(eq(orderProducts.orderId, order.id)).all();
         for (const op of oldProds) {
             const prod = db.select().from(products).where(eq(products.id, op.productId)).get();
-            if (prod) db.update(products).set({ stock: prod.stock + op.quantity }).where(eq(products.id, op.productId)).run();
+            if (prod) await db.update(products).set({ stock: prod.stock + op.quantity }).where(eq(products.id, op.productId)).run();
         }
-        db.delete(orderProducts).where(eq(orderProducts.orderId, order.id)).run();
+        await db.delete(orderProducts).where(eq(orderProducts.orderId, order.id)).run();
         for (const p of prods) {
-            db.insert(orderProducts).values({ orderId: order.id, productId: Number(p.id), quantity: p.quantity || 1 }).run();
+            await db.insert(orderProducts).values({ orderId: order.id, productId: Number(p.id), quantity: p.quantity || 1 }).run();
             const prod = db.select().from(products).where(eq(products.id, Number(p.id))).get();
-            if (prod) db.update(products).set({ stock: prod.stock - (p.quantity || 1) }).where(eq(products.id, Number(p.id))).run();
+            if (prod) await db.update(products).set({ stock: prod.stock - (p.quantity || 1) }).where(eq(products.id, Number(p.id))).run();
         }
         updates.total = Number(total);
     }
 
-    db.update(orders).set(updates).where(eq(orders.id, Number(req.params.id))).run();
+    await db.update(orders).set(updates).where(eq(orders.id, Number(req.params.id))).run();
     const updated = db.select().from(orders).where(eq(orders.id, Number(req.params.id))).get();
     res.status(200).json(updated);
 };
@@ -158,7 +158,7 @@ exports.updateOrderDelivery = async (req, res) => {
     const order = db.select().from(orders).where(eq(orders.id, Number(req.params.id))).get();
 
     if (order) {
-        db.update(orders).set({ delivery: !order.delivery, updatedAt: now() }).where(eq(orders.id, Number(req.params.id))).run();
+        await db.update(orders).set({ delivery: !order.delivery, updatedAt: now() }).where(eq(orders.id, Number(req.params.id))).run();
         const updated = db.select().from(orders).where(eq(orders.id, Number(req.params.id))).get();
         res.json(updated);
     } else {
@@ -171,8 +171,8 @@ exports.deleteOrder = async (req, res) => {
     const order = db.select().from(orders).where(eq(orders.id, Number(req.params.id))).get();
 
     if (order) {
-        db.delete(orderProducts).where(eq(orderProducts.orderId, order.id)).run();
-        db.delete(orders).where(eq(orders.id, Number(req.params.id))).run();
+        await db.delete(orderProducts).where(eq(orderProducts.orderId, order.id)).run();
+        await db.delete(orders).where(eq(orders.id, Number(req.params.id))).run();
         res.json({ message: "Order removed" });
     } else {
         res.status(404);

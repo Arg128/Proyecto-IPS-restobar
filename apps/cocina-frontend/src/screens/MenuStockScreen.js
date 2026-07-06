@@ -33,6 +33,8 @@ const MenuStockScreen = () => {
             ]);
             setRecetas(resRecetas.data);
             setProductos(resProductos.data);
+            console.log(resRecetas.data);
+            console.log(resProductos.data);
         } catch (err) {
             setError(err.response?.data?.message || err.message);
         }
@@ -43,13 +45,13 @@ const MenuStockScreen = () => {
         const recetasProd = recetas.filter((r) => r.productId === prod.id);
         setIngredientes(
             recetasProd.length > 0
-                ? recetasProd.map((r) => ({ ingrediente: r.ingrediente, cantidad: r.cantidad, unidad: r.unidad }))
-                : [{ ingrediente: "", cantidad: "", unidad: "" }]
+                ? recetasProd.map((r) => ({ ingrediente: r.ingrediente, cantidad: r.cantidad, unidad_medida: r.unidad_medida }))
+                : [{ ingrediente: "", cantidad: "", unidad_medida: "" }]
         );
     };
 
     const agregarIngrediente = () => {
-        setIngredientes([...ingredientes, { ingrediente: "", cantidad: "", unidad: "" }]);
+        setIngredientes([...ingredientes, { ingrediente: "", cantidad: "", unidad_medida: "" }]);
     };
 
     const cambiarIngrediente = (i, field, value) => {
@@ -71,6 +73,7 @@ const MenuStockScreen = () => {
     const agruparRecetas = () => {
         const map = {};
         recetas.forEach((r) => {
+            console.log(r);
             if (!map[r.productId]) map[r.productId] = { producto: r.producto, ingredientes: [] };
             map[r.productId].ingredientes.push(r);
         });
@@ -126,7 +129,7 @@ const MenuStockScreen = () => {
                                                             <td>
                                                                 {grupo.ingredientes.map((ing, i) => (
                                                                     <span key={i} className="badge badge-info mr-1 mb-1">
-                                                                        {ing.ingrediente}: {ing.cantidad} {ing.unidad}
+                                                                        {ing.ingrediente}: {ing.cantidad} {ing.unidad_medida}
                                                                     </span>
                                                                 ))}
                                                             </td>
@@ -190,8 +193,8 @@ const MenuStockScreen = () => {
                                                                     type="text"
                                                                     className="form-control form-control-sm"
                                                                     placeholder="Unidad (kg, g, und)"
-                                                                    value={ing.unidad}
-                                                                    onChange={(e) => cambiarIngrediente(i, "unidad", e.target.value)}
+                                                                    value={ing.unidad_medida}
+                                                                    onChange={(e) => cambiarIngrediente(i, "unidad_medida", e.target.value)}
                                                                 />
                                                             </div>
                                                         </div>

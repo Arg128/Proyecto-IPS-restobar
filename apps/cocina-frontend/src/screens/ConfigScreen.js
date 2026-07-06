@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import axios from "axios";
 import { Message } from "@restobar/ui";
 
-const API = "/api/coccion";
+const API = "/api/coccion/tiempos";
 
 const config = () => ({
     headers: {
@@ -24,8 +24,9 @@ const ConfigScreen = () => {
 
     const cargarProductos = async () => {
         try {
-            const { data } = await axios.get(`${API}/tiempos/productos`, config());
+            const { data } = await axios.get(`${API}/productos`, config());
             setProductos(data);
+            console.log(data);
         } catch (err) {
             setError(err.response?.data?.message || err.message);
         }
@@ -33,7 +34,7 @@ const ConfigScreen = () => {
 
     const actualizarTiempo = async (productId, tiempoPromedio) => {
         try {
-            const { data } = await axios.put(`${API}/tiempos/product/${productId}`, { tiempoPromedio }, config());
+            const { data } = await axios.put(`${API}/${productId}`, { tiempoPromedio }, config());
             await cargarProductos();
             return data;
         } catch (err) {
@@ -45,7 +46,7 @@ const ConfigScreen = () => {
 
     const guardarEventos = async (productId, eventos) => {
         try {
-            const { data } = await axios.put(`${API}/tiempos/${productId}/eventos`, { eventos }, config());
+            const { data } = await axios.put(`${API}/${productId}/eventos`, { eventos }, config());
             await cargarProductos();
             return data;
         } catch (err) {
@@ -106,7 +107,6 @@ const ProductoConfig = ({ producto, onGuardarTiempo, onGuardarEventos }) => {
     );
     const [successMsg, setSuccessMsg] = useState("");
     const [errorMsg, setErrorMsg] = useState("");
-
     const mostrarSuccess = (msg) => {
         setSuccessMsg(msg);
         setTimeout(() => setSuccessMsg(""), 3000);

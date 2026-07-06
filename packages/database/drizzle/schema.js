@@ -29,7 +29,7 @@ const products = sqliteTable("Products", {
     name: text("name").notNull(),
     price: real("price").notNull(),
     stock: integer("stock").notNull().default(0),
-    categoryId: integer("categoryId").references(() => categories.id, { onDelete: "SET NULL" }),
+    categoryId: integer("categoryId").notNull().references(() => categories.id, { onDelete: "SET NULL" }),
     createdAt: text("createdAt").notNull().default(sql`(datetime('now'))`),
     updatedAt: text("updatedAt").notNull().default(sql`(datetime('now'))`),
 });

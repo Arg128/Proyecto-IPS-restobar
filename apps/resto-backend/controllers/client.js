@@ -51,7 +51,7 @@ exports.updateClient = async (req, res) => {
     const client = db.select().from(clients).where(eq(clients.id, Number(req.params.id))).get();
 
     if (client) {
-        db.update(clients).set({
+        await db.update(clients).set({
             name: name || client.name, address: address || client.address,
             phone: phone || client.phone, email: email || client.email,
             dni: dni || client.dni, updatedAt: now(),
@@ -68,7 +68,7 @@ exports.deleteClient = async (req, res) => {
     const client = db.select().from(clients).where(eq(clients.id, Number(req.params.id))).get();
 
     if (client) {
-        db.delete(clients).where(eq(clients.id, Number(req.params.id))).run();
+        await db.delete(clients).where(eq(clients.id, Number(req.params.id))).run();
         res.json({ message: "Client removed" });
     } else {
         res.status(404);

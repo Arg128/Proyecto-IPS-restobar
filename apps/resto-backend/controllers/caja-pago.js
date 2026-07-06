@@ -35,7 +35,7 @@ const anularPago = async (req, res) => {
         res.status(404);
         throw new Error("Pago no encontrado");
     }
-    db.update(pagos).set({ estado: "anulado", updatedAt: now() }).where(eq(pagos.id, Number(req.params.id))).run();
+    await db.update(pagos).set({ estado: "anulado", updatedAt: now() }).where(eq(pagos.id, Number(req.params.id))).run();
     const updated = db.select().from(pagos).where(eq(pagos.id, Number(req.params.id))).get();
     res.json(updated);
 };

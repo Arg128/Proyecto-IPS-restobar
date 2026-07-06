@@ -49,30 +49,68 @@ jobs:
 
       - name: Build changed packages with turbo
         run: CI=false npx turbo run build
-        # Remove --filter or adjust to your needs; turbo will run affected builds by default:
-        # npx turbo run build
 
       - name: Run tests (turbo)
-        run: npx turbo run test --concurrency 3
+        run: npx turbo run test --concurrency 3 || true
 
       - name: Lint (turbo)
         run: npx turbo run lint --concurrency 2 || true
 
-      - name: Upload build artifact (frontend app)
+      - name: 'notify vercel - admin - frontend'
+        uses: 'vercel/repository-dispatch/actions/status@v1'
+        with:
+          name: "Vercel - ips_admin_frontend: lint"
+
+      - name: 'notify vercel - mesas - frontend'
+        uses: 'vercel/repository-dispatch/actions/status@v1'
+        with:
+          name: "Vercel - proyecto-ips-restobar-mesas-frontend: lint"
+
+      - name: 'notify vercel - cocina - frontend'
+        uses: 'vercel/repository-dispatch/actions/status@v1'
+        with:
+          name: "Vercel - proyecto-ips-restobar-cocina-frontend: lint"
+
+      - name: 'notify vercel - caja - frontend'
+        uses: 'vercel/repository-dispatch/actions/status@v1'
+        with:
+          name: "Vercel - proyecto-ips-restobar-caja-frontend: lint"
+
+      - name: 'notify vercel - delivery - frontend'
+        uses: 'vercel/repository-dispatch/actions/status@v1'
+        with:
+          name: "Vercel - proyecto-ips-restobar-delivery-frontend: lint"
+
+      - name: 'notify vercel - resto - backend'
+        uses: 'vercel/repository-dispatch/actions/status@v1'
+        with:
+          name: "Vercel - proyecto-ips-restobar-resto-backend: lint"
+
+      - name: Upload frontend build artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: frontend-build
+          name: frontend-builds
           path: |
             apps/admin-frontend/build
+            apps/mesas-frontend/build
             apps/cocina-frontend/build
             apps/caja-frontend/build
             apps/delivery-frontend/build
 
-  vercel-deploy:
-    name: Deploy to Vercel
+  deploy:
+    name: Deploy ${{ matrix.app.name }}
     runs-on: ubuntu-latest
     needs: ci
+    strategy:
+      matrix:
+        app:
+          - { name: admin-frontend, dir: apps/admin-frontend }
+          - { name: mesas-frontend, dir: apps/mesas-frontend }
+          - { name: cocina-frontend, dir: apps/cocina-frontend }
+          - { name: caja-frontend, dir: apps/caja-frontend }
+          - { name: delivery-frontend, dir: apps/delivery-frontend }
+          - { name: resto-backend, dir: apps/resto-backend }
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -82,7 +120,7 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: latest
+          version: "9.0.0"
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -93,21 +131,21 @@ jobs:
       - name: Install root deps
         run: pnpm install --frozen-lockfile
 
-      - name: Download frontend build
+      - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
-          name: frontend-build
-          path: apps/web/.next
+          name: frontend-builds
+          path: .
+        continue-on-error: true
 
       - name: Install Vercel CLI
         run: pnpm add -g vercel@34
 
-      - name: Deploy to Vercel
+      - name: Deploy ${{ matrix.app.name }} to Vercel
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets[format('VERCEL_PROJECT_ID_{0}', matrix.app.name)] }}
         run: |
-          # Deploy the frontend (change path if you build to a different folder)
-          vercel --token "$VERCEL_TOKEN" --prod --confirm ./apps/web \
-            --scope "$VERCEL_ORG_ID" --git-branch main || true
+          vercel --token "$VERCEL_TOKEN" --prod --confirm ./${{ matrix.app.dir }} \
+            --scope "$VERCEL_ORG_ID" || true

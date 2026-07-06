@@ -14,15 +14,15 @@ exports.actualizarTiempo = async (req, res) => {
     const { productId } = req.params;
     const { tiempoPromedio } = req.body;
 
-    const existing = db.select().from(tiemposCoccion).where(eq(tiemposCoccion.productId, Number(productId))).get();
+    const existing = await db.select().from(tiemposCoccion).where(eq(tiemposCoccion.productId, Number(productId))).get();
 
     if (existing) {
-        db.update(tiemposCoccion).set({ principal: tiempoPromedio }).where(eq(tiemposCoccion.productId, Number(productId))).run();
+        await db.update(tiemposCoccion).set({ principal: tiempoPromedio }).where(eq(tiemposCoccion.productId, Number(productId))).run();
     } else {
-        db.insert(tiemposCoccion).values({ productId: Number(productId), principal: tiempoPromedio }).run();
+        await db.insert(tiemposCoccion).values({ productId: Number(productId), principal: tiempoPromedio }).run();
     }
 
-    const result = db.select().from(tiemposCoccion).where(eq(tiemposCoccion.productId, Number(productId))).get();
+    const result = await db.select().from(tiemposCoccion).where(eq(tiemposCoccion.productId, Number(productId))).get();
     res.json(result);
 };
 
@@ -35,11 +35,11 @@ exports.configurarEventos = async (req, res) => {
     const { productId } = req.params;
     const { eventos } = req.body;
 
-    db.delete(eventosCoccion).where(eq(eventosCoccion.productId, Number(productId))).run();
+    await db.delete(eventosCoccion).where(eq(eventosCoccion.productId, Number(productId))).run();
 
     if (eventos && eventos.length > 0) {
         for (let i = 0; i < eventos.length; i++) {
-            db.insert(eventosCoccion).values({
+            await db.insert(eventosCoccion).values({
                 productId: Number(productId),
                 nombre: eventos[i].nombre,
                 duracionSegundos: eventos[i].duracionSegundos || 0,
@@ -55,9 +55,9 @@ exports.configurarEventos = async (req, res) => {
 exports.obtenerProductos = async (req, res) => {
     const result = await db.select().from(products).all();
     const withRelations = await Promise.all(result.map(async p => {
-        const tc = db.select().from(tiemposCoccion).where(eq(tiemposCoccion.productId, p.id)).get() || null;
+        const tc = await db.select().from(tiemposCoccion).where(eq(tiemposCoccion.productId, p.id)).get() || null;
         const ev = await db.select().from(eventosCoccion).where(eq(eventosCoccion.productId, p.id)).orderBy(eventosCoccion.orden, "asc").all();
-        return { ...p, tiemposCoccion: tc, eventosCoccion: ev };
+        return { ...p, tiemposCoccion: tc ? [tc] : [], eventosCoccion: ev };
     }));
     res.json(withRelations);
 };

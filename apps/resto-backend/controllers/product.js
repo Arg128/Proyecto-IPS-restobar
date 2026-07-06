@@ -18,6 +18,13 @@ exports.createProduct = async (req, res) => {
 };
 
 exports.getProducts = async (req, res) => {
+    if (req.query.all === "true") {
+        const result = await db.query.products.findMany({
+            with: { category: true },
+        });
+        return res.json(result);
+    }
+
     const pageSize = 5;
     const page = Number(req.query.pageNumber) || 1;
     const keyword = req.query.keyword;
@@ -60,7 +67,7 @@ exports.updateProduct = async (req, res) => {
     const product = db.select().from(products).where(eq(products.id, Number(req.params.id))).get();
 
     if (product) {
-        db.update(products).set({
+        await db.update(products).set({
             name: name || product.name,
             price: price !== undefined ? Number(price) : product.price,
             stock: stock !== undefined ? stock : product.stock,
@@ -79,7 +86,7 @@ exports.deleteProduct = async (req, res) => {
     const product = db.select().from(products).where(eq(products.id, Number(req.params.id))).get();
 
     if (product) {
-        db.delete(products).where(eq(products.id, Number(req.params.id))).run();
+        await db.delete(products).where(eq(products.id, Number(req.params.id))).run();
         res.json({ message: "Product removed" });
     } else {
         res.status(404);

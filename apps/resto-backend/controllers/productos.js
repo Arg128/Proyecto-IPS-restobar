@@ -66,16 +66,4 @@ exports.importarProductosCSV = async (req, res) => {
     });
 };
 
-exports.listarProductos = async (req, res) => {
-    const result = await db.select().from(products).all();
-    const withCategory = result.map(p => {
-        const cat = p.categoryId ? db.select().from(categories).where(eq(categories.id, p.categoryId)).get() : null;
-        return { ...p, category: cat || null };
-    });
-    res.json(withCategory);
-};
 
-exports.listarCategorias = async (req, res) => {
-    const result = await db.select().from(categories).all();
-    res.json(result);
-};

@@ -11,8 +11,9 @@ const {
 const upload = multer({ storage: multer.memoryStorage() });
 
 router.get("/", obtenerRecetas);
+router.post("/importar/csv", upload.single("archivo"), subirCSV);
 router.get("/:productId", obtenerRecetaDeProducto);
 router.post("/:productId", guardarReceta);
-router.post("/importar/csv", upload.single("archivo"), subirCSV);
+router.put("/:productId", guardarReceta);
 
 module.exports = router;

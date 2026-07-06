@@ -1,13 +1,18 @@
 const { eq, or, like, count } = require("drizzle-orm");
-const { db, now, categories } = require("@restobar/database");
+const { db, now, categories, products } = require("@restobar/database");
 
 exports.createCategory = async (req, res) => {
     const { name } = req.body;
-    const created = db.insert(categories).values({ name, createdAt: now(), updatedAt: now() }).returning().get();
+    const created = await db.insert(categories).values({ name, createdAt: now(), updatedAt: now() }).returning().get();
     res.status(201).json(created);
 };
 
 exports.getCategories = async (req, res) => {
+    if (req.query.all === "true") {
+        const result = await db.select().from(categories).all();
+        return res.json(result);
+    }
+
     const pageSize = 5;
     const page = Number(req.query.pageNumber) || 1;
     const keyword = req.query.keyword;
@@ -44,7 +49,7 @@ exports.updateCategory = async (req, res) => {
     const cat = db.select().from(categories).where(eq(categories.id, Number(req.params.id))).get();
 
     if (cat) {
-        db.update(categories).set({ name, updatedAt: now() }).where(eq(categories.id, Number(req.params.id))).run();
+        await db.update(categories).set({ name, updatedAt: now() }).where(eq(categories.id, Number(req.params.id))).run();
         const updated = db.select().from(categories).where(eq(categories.id, Number(req.params.id))).get();
         res.json(updated);
     } else {
@@ -56,11 +61,20 @@ exports.updateCategory = async (req, res) => {
 exports.deleteCategory = async (req, res) => {
     const cat = db.select().from(categories).where(eq(categories.id, Number(req.params.id))).get();
 
-    if (cat) {
-        db.delete(categories).where(eq(categories.id, Number(req.params.id))).run();
-        res.json({ message: "Category removed" });
-    } else {
+    if (!cat) {
         res.status(404);
         throw new Error("Category not found");
     }
+
+    const result = await db.select({ total: count() }).from(products)
+        .where(eq(products.categoryId, Number(req.params.id))).all();
+    const productCount = result[0]?.total || 0;
+    
+    if (productCount > 0) {
+        res.status(400);
+        throw new Error(`Cannot delete "${cat.name}": ${productCount} product(s) are using this category`);
+    }
+
+    await db.delete(categories).where(eq(categories.id, Number(req.params.id))).run();
+    res.json({ message: "Category removed" });
 };

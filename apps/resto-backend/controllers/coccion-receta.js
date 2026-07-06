@@ -5,11 +5,16 @@ const { Readable } = require("stream");
 
 exports.obtenerRecetas = async (req, res) => {
     const result = await db.select().from(recetas).all();
-    const withProduct = result.map(r => {
-        const prod = r.productId ? db.select().from(products).where(eq(products.id, r.productId)).get() : null;
+    const withProduct = await Promise.all(
+      result.map(async (r) => {
+        // const prod = (await db.select().from(products).where(eq(products.id, Number(r.productId))).get());
+        const prod = await db.select().from(products).where(eq(products.id, Number(r.productId))).get();
+        console.log(prod);
         return { ...r, producto: prod || null };
-    });
+    }));
     res.json(withProduct);
+    console.log(result);
+    // res.json(result);
 };
 
 exports.obtenerRecetaDeProducto = async (req, res) => {
@@ -25,21 +30,23 @@ exports.guardarReceta = async (req, res) => {
     const { productId } = req.params;
     const { ingredientes } = req.body;
 
-    db.delete(recetas).where(eq(recetas.productId, Number(productId))).run();
-
+    const existing = db.select().from(recetas).where(eq(recetas.productId, Number(productId))).get();
+    if (existing) {
+        await db.delete(recetas).where(eq(recetas.productId, Number(productId))).run();
+    }
     if (ingredientes && ingredientes.length > 0) {
         for (const ing of ingredientes) {
-            db.insert(recetas).values({
+            await db.insert(recetas).values({
                 productId: Number(productId),
                 ingrediente: ing.ingrediente,
                 cantidad: ing.cantidad,
-                unidad_medida: ing.unidad,
+                unidad_medida: ing.unidad_medida,
                 categoria: "C",
             }).run();
         }
     }
 
-    const creados = await db.select().from(recetas).where(eq(recetas.productId, Number(productId))).all();
+    const creados = db.select().from(recetas).where(eq(recetas.productId, Number(productId))).all();
     res.json(creados);
 };
 
@@ -76,11 +83,11 @@ exports.subirCSV = async (req, res) => {
         try {
             const existing = db.select().from(recetas).where(eq(recetas.ingrediente, item.nombre)).get();
             if (existing) {
-                db.update(recetas).set({ categoria: item.categoria, unidad_medida: item.unidad_por_defecto })
+                await db.update(recetas).set({ categoria: item.categoria, unidad_medida: item.unidad_por_defecto })
                     .where(eq(recetas.id, existing.id)).run();
                 creados.push({ ...existing, categoria: item.categoria, unidad_medida: item.unidad_por_defecto });
             } else {
-                db.insert(recetas).values({
+                await db.insert(recetas).values({
                     productId: 0, ingrediente: item.nombre,
                     categoria: item.categoria, cantidad: 0,
                     unidad_medida: item.unidad_por_defecto || "",
