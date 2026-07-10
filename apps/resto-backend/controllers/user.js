@@ -6,7 +6,7 @@ const generateToken = require("../utils/generateToken");
 exports.registerUser = async (req, res) => {
     const { name, email, password, isAdmin } = req.body;
 
-    const existing = db.select().from(users).where(eq(users.email, String(email))).get();
+    const existing = await db.select().from(users).where(eq(users.email, String(email))).get();
     if (existing) {
         res.status(400);
         throw new Error("User already exists");
@@ -54,7 +54,7 @@ exports.login = async (req, res, next) => {
 };
 
 exports.getUser = async (req, res) => {
-    const user = db.select().from(users).where(eq(users.id, Number(req.params.id))).get();
+    const user = await db.select().from(users).where(eq(users.id, Number(req.params.id))).get();
 
     if (user) {
         const { password, ...safe } = user;
@@ -81,7 +81,7 @@ exports.getUsers = async (req, res) => {
     }
 
     const result = await query.all();
-    const total = countQuery.get();
+    const total = await countQuery.get();
 
     res.json({ users: result, page, pages: Math.ceil(total.count / pageSize) });
 };

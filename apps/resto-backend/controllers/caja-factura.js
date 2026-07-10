@@ -21,12 +21,12 @@ const getFacturas = async (req, res) => {
 };
 
 const getFacturaById = async (req, res) => {
-    const factura = db.select().from(facturas).where(eq(facturas.id, Number(req.params.id))).get();
+    const factura = await db.select().from(facturas).where(eq(facturas.id, Number(req.params.id))).get();
     if (!factura) {
         res.status(404);
         throw new Error("Factura no encontrada");
     }
-    const p = db.select().from(pagos).where(eq(pagos.id, factura.pago_id)).get();
+    const p = await db.select().from(pagos).where(eq(pagos.id, factura.pago_id)).get();
     res.json({ ...factura, Pago: p || null });
 };
 

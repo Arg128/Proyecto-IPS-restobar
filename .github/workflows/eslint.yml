@@ -43,10 +43,12 @@ jobs:
           --ext .js,.jsx,.ts,.tsx
           --format @microsoft/eslint-formatter-sarif
           --output-file eslint-results.sarif
-        continue-on-error: true
+        continue-on-error: false
 
       - name: Upload analysis results to GitHub
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: eslint-results.sarif
+          node-version: 24.x
+          cache: 'pnpm'
           wait-for-processing: true
