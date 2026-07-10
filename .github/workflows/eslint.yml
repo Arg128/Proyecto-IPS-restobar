@@ -32,6 +32,7 @@ jobs:
 
       - name: Install just ESLint formatter
         run: |
+          npm install eslint-config-react-app
           npm install @microsoft/eslint-formatter-sarif@3.1.0
 
       - name: Run ESLint
