@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "cross-env PORT=3005 NODE_OPTIONS=--openssl-legacy-provider react-scripts start",
     "build": "cross-env NODE_OPTIONS=--openssl-legacy-provider react-scripts build",
-    "lint": "eslint ."
+    "lint": "eslint src/"
   },
   "dependencies": {
     "axios": "^1.6.0",

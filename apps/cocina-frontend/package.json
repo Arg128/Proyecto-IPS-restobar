@@ -18,7 +18,8 @@
     "start": "serve -s build -l 3001",
     "build": "react-scripts --openssl-legacy-provider build",
     "test": "react-scripts test",
-    "dev": "cross-env PORT=3001 react-scripts --openssl-legacy-provider start"
+    "dev": "cross-env PORT=3001 react-scripts --openssl-legacy-provider start",
+    "lint": "eslint src/"
   },
   "eslintConfig": {
     "extends": "react-app"

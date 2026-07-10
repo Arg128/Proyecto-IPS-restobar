@@ -13,7 +13,6 @@ on:
   push:
     branches: [ "master" ]
   pull_request:
-    # The branches below must be a subset of the branches above
     branches: [ "master" ]
   schedule:
     - cron: '40 13 * * 0'
@@ -25,23 +24,39 @@ jobs:
     permissions:
       contents: read
       security-events: write
-      actions: read # only required for a private repository by github/codeql-action/upload-sarif to get the Action run status
+      actions: read
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: "9.0.0"
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+          cache: 'pnpm'
+
+#      - name: Install dependencies
+#        run: pnpm install --frozen-lockfile
+
       - name: Install just ESLint formatter
         run: |
-          npm i eslint-plugin-standard
-          npm i eslint-config-standard
-          npm i @typescript-eslint/parser
-          npm install eslint-config-react-app
-          npm install @microsoft/eslint-formatter-sarif@3.1.0
+          pnpm install eslint
+          pnpm install eslint-plugin-standard
+          pnpm install eslint-config-standard
+          pnpm install @typescript-eslint/parser
+          pnpm install eslint-config-react-app
+          pnpm install @microsoft/eslint-formatter-sarif@3.1.0
+          pnpm add -D eslint@^9.0.0 @eslint/js globals eslint-plugin-react eslint-plugin-react-hooks
 
       - name: Run ESLint
         env:
           SARIF_ESLINT_IGNORE_SUPPRESSED: "true"
-        run: npx eslint .
+        run: >-
+          npx eslint .
           --ext .js,.jsx,.ts,.tsx
           --format @microsoft/eslint-formatter-sarif
           --output-file eslint-results.sarif
@@ -51,6 +66,4 @@ jobs:
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: eslint-results.sarif
-          node-version: 24.x
-          cache: 'pnpm'
           wait-for-processing: true
