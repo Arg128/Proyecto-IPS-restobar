@@ -28,7 +28,9 @@
     "turso": "link:@tursodatabase/tap/turso"
   },
   "devDependencies": {
-    "eslint-plugin-jest": "24",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "eslint-plugin-jest": "^27.0.0",
     "jest": "^30.4.2",
     "nodemon": "^2.0.5"
   }
