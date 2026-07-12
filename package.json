@@ -17,7 +17,8 @@
   "packageManager": "pnpm@9.0.0",
   "pnpm": {
     "overrides": {
-      "jest": "24.9.0"
+      "jest": "24.9.0",
+      "eslint-plugin-jest": "29.0.1"
     }
   },
   "dependencies": {
