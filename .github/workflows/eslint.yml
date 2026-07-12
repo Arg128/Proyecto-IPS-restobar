@@ -44,10 +44,10 @@ jobs:
 
       - name: Install just ESLint formatter
         run: |
-          pnpm add -Dw eslint@^9.0.0 @eslint/js globals
-          pnpm add -Dw @typescript-eslint/parser@^8.0.0
-          pnpm add -Dw @typescript-eslint/eslint-plugin@^8.0.0
-          pnpm add -Dw eslint-plugin-jest@^29.0.0
+          # pnpm add -Dw eslint@^9.0.0 @eslint/js globals
+          # pnpm add -Dw @typescript-eslint/parser@^8.0.0
+          # pnpm add -Dw @typescript-eslint/eslint-plugin@^8.0.0
+          # pnpm add -Dw eslint-plugin-jest@^29.0.0
           pnpm add -Dw eslint-plugin-react eslint-plugin-react-hooks
           pnpm add -Dw eslint-plugin-standard eslint-config-standard
           pnpm add -Dw @microsoft/eslint-formatter-sarif@3.1.0
