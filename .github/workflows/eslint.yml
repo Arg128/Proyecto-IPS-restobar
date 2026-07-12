@@ -48,6 +48,7 @@ jobs:
           pnpm add -Dw eslint-plugin-standard
           pnpm add -Dw eslint-config-standard
           pnpm add -Dw @typescript-eslint/parser
+          pnpm add -Dw @typescript-eslint/eslint-plugin@^8.0.0
           pnpm add -Dw @microsoft/eslint-formatter-sarif@3.1.0
           pnpm add -Dw eslint@^9.0.0 @eslint/js globals eslint-plugin-react eslint-plugin-react-hooks
 
