@@ -44,13 +44,13 @@ jobs:
 
       - name: Install just ESLint formatter
         run: |
-          pnpm add -D -w eslint
-          pnpm add -D -w eslint-plugin-standard
-          pnpm add -D -w eslint-config-standard
-          pnpm add -D -w @typescript-eslint/parser
-          pnpm add -D -w eslint-config-react-app
-          pnpm add -D -w @microsoft/eslint-formatter-sarif@3.1.0
-          pnpm add -D -w eslint@^9.0.0 @eslint/js globals eslint-plugin-react eslint-plugin-react-hooks
+          pnpm add -Dw eslint
+          pnpm add -Dw eslint-plugin-standard
+          pnpm add -Dw eslint-config-standard
+          pnpm add -Dw @typescript-eslint/parser
+          pnpm add -Dw eslint-config-react-app
+          pnpm add -Dw @microsoft/eslint-formatter-sarif@3.1.0
+          pnpm add -Dw eslint@^9.0.0 @eslint/js globals eslint-plugin-react eslint-plugin-react-hooks
 
       - name: Run ESLint
         env:

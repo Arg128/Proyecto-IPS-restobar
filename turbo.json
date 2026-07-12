@@ -39,6 +39,7 @@
       "persistent": true
     },
     "lint": {
+      "cache": false,
       "outputs": []
     },
     "db:migrate": {

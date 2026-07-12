@@ -21,7 +21,7 @@
     "build": "react-scripts --openssl-legacy-provider build",
     "test": "react-scripts test",
     "dev": "cross-env PORT=3002 react-scripts --openssl-legacy-provider start",
-    "lint": "slint src/"
+    "lint": "eslint src/"
   },
   "proxy": "http://localhost:5000",
   "eslintConfig": {

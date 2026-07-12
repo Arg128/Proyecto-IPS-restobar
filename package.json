@@ -5,11 +5,13 @@
     "dev": "turbo run dev",
     "start": "turbo run start",
     "lint": "turbo run lint",
+    "lint:fix": "turbo run lint:fix",
     "db:migrate": "pnpm --filter @restobar/database db:migrate",
     "db:seed": "pnpm --filter @restobar/database db:seed",
     "db:generate": "pnpm --filter @restobar/database db:generate"
   },
   "devDependencies": {
+    "globals": "^17.7.0",
     "turbo": "latest"
   },
   "packageManager": "pnpm@9.0.0",
