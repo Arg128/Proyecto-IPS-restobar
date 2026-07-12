@@ -39,8 +39,8 @@ jobs:
           node-version: 24.x
           cache: 'pnpm'
 
-#      - name: Install dependencies
-#        run: pnpm install --frozen-lockfile
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
 #      - name: Install just ESLint formatter
 #        run: |
