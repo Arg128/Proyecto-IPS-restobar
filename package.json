@@ -11,6 +11,8 @@
     "db:generate": "pnpm --filter @restobar/database db:generate"
   },
   "devDependencies": {
+    "@babel/eslint-parser": "^8.0.1",
+    "@microsoft/eslint-formatter-sarif": "3.1.0",
     "globals": "^17.7.0",
     "turbo": "latest"
   },
