@@ -62,7 +62,7 @@ const OrderCreateScreen = ({ history, match }) => {
                 history.push("/active");
             }
         }
-    }, [dispatch, history, success, error]);
+    }, [dispatch, history, success, error, delivery]);
 
     const handleSubmit = (e) => {
         e.preventDefault();

@@ -8,7 +8,7 @@ const OrderInfo = ({ productsInOrder, total, setTotal }) => {
 
     useEffect(() => {
         setTotal(totalPrice(productsInOrder));
-    }, [productsInOrder]);
+    }, [productsInOrder, setTotal]);
 
     //get order total price
     const totalPrice = (productsIn) => {

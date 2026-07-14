@@ -52,13 +52,13 @@ const ProductsTable = ({
 
     useEffect(() => {
         dispatch(listProducts(keyword, pageNumber));
-    }, [keyword, pageNumber]);
+    }, [dispatch, keyword, pageNumber]);
 
     useEffect(() => {
         if (productsFromState) {
             setProducts(mapProducts(productsFromState));
         }
-    }, [productsFromState]);
+    }, [mapProducts, productsFromState]);
 
     //check if product is already in order
     const inOrder = (obj, list) => {

@@ -10,15 +10,15 @@ const OrderSelect = ({ items, data, setData, disabled }) => {
                 setCurrent(item);
             }
         });
-    }, [items]);
+    }, [data, items, mapSelect]);
 
-    const mapSelect = () => {
+    const mapSelect = useCallback(() => {
         const mapped = items.map((item) => ({
             label: item.name,
             value: item.id,
         }));
         return mapped;
-    };
+    });
 
     const handleChange = (element) => {
         setCurrent(element);

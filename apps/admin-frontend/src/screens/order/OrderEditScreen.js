@@ -67,7 +67,7 @@ const OrderEditScreen = ({ history, match }) => {
                 history.push("/active");
             }
         }
-    }, [successUpdate]);
+    }, [delivery, dispatch, history, successUpdate]);
 
     useEffect(() => {
         //load order
@@ -96,7 +96,7 @@ const OrderEditScreen = ({ history, match }) => {
                 }
             }
         }
-    }, [dispatch, history, order, orderId]);
+    }, [delivery, dispatch, history, note, order, orderId]);
 
     const handleSubmit = (e) => {
         e.preventDefault();

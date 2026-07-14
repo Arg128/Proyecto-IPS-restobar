@@ -76,7 +76,7 @@ const ProfileScreen = ({ history }) => {
             setEmail(user.email);
             setImage(user.image);
         }
-    }, [dispatch, history, user, userInfo, successUpdate]);
+    }, [dispatch, history, user, userInfo, successUpdate, email, password, passwordCheck]);
 
     const handleSubmit = (e) => {
         e.preventDefault();

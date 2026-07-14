@@ -10,15 +10,15 @@ const Select = ({ items, data, setData, disabled, search = () => {} }) => {
                 setCurrent(item);
             }
         });
-    }, [items, data]);
+    }, [items, data, mapSelect]);
 
-    const mapSelect = () => {
+    const mapSelect = useCallback(() => {
         const mapped = items.map((item) => ({
             label: item.name,
             value: item.id,
         }));
         return mapped;
-    };
+    });
 
     const handleChange = (element) => {
         setCurrent(element);
