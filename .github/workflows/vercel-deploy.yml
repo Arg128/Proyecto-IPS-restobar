@@ -59,7 +59,7 @@ jobs:
       - name: 'notify vercel - admin - frontend'
         uses: 'vercel/repository-dispatch/actions/status@v1'
         with:
-          name: "Vercel - ips_admin_frontend: lint"
+          name: "Vercel - proyecto-ips-admin-frontend: lint"
 
       - name: 'notify vercel - mesas - frontend'
         uses: 'vercel/repository-dispatch/actions/status@v1'
