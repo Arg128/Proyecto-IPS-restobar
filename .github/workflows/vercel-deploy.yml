@@ -142,6 +142,9 @@ jobs:
         run: pnpm add -g vercel@34
 
       - name: Deploy ${{ matrix.app.name }} to Vercel
+        permissions:
+          contents: read
+          statuses: write
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
