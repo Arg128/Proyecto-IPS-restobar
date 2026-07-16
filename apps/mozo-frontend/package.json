@@ -1,0 +1,29 @@
+{
+  "name": "mozo-frontend",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "cross-env PORT=3006 react-scripts start",
+    "build": "cross-env react-scripts build",
+    "lint": "eslint src/"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "cross-env": "^10.1.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.22.0",
+    "react-scripts": "5.0.1"
+  },
+  "devDependencies": {
+    "cross-env": "^10.1.0",
+    "serve": "^14.2.0"
+  },
+  "browserslist": {
+    "production": [">0.2%", "not dead", "not op_mini all"],
+    "development": ["last 1 chrome version", "last 1 firefox version", "last 1 safari version"]
+  },
+  "eslintConfig": {
+    "extends": "react-app"
+  }
+}
