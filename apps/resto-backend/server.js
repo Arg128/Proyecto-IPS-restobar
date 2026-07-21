@@ -28,7 +28,7 @@ if (process.env.NODE_ENV === "development") {
 /* ========== admin routes ========== */
 app.use("/api/users", require("./routes/user"));
 app.use("/api/categories", require("./routes/category"));
-app.use("/api/products", require("./routes/product"));
+app.use("/api/products", require("./routes/products"));
 app.use("/api/clients", require("./routes/client"));
 app.use("/api/tables", require("./routes/table"));
 app.use("/api/orders", require("./routes/order"));
@@ -41,7 +41,7 @@ if (!process.env.VERCEL) {
 app.use("/api/coccion/pedidos", require("./routes/coccion-pedidos"));
 app.use("/api/coccion/tiempos", require("./routes/coccion-tiempos"));
 app.use("/api/coccion/recetas", require("./routes/coccion-receta"));
-app.use("/api/coccion/productos", require("./routes/productos"));
+app.use("/api/coccion/productos", require("./routes/products"));
 
 /* ========== caja routes ========== */
 app.use("/api/caja/pagos", require("./routes/caja-pagos"));

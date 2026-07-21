@@ -270,7 +270,7 @@ const DashboardScreen = ({ history }) => {
                                     </span>
                                 </h4>
                             </td>
-                            <td>{order.client ? order.client.name : ""}</td>
+                            <td>{order.user ? order.user.name : ""}</td>
                             <td>{order.table ? order.table.name : ""}</td>
                             <td>
                                 <h4>
@@ -291,8 +291,8 @@ const DashboardScreen = ({ history }) => {
             .map((order) => (
                 <DeliveryListItem
                     id={order.id}
-                    name={order.client ? order.client.name : ""}
-                    address={order.client ? order.client.address : ""}
+                    name={order.user ? order.user.name : ""}
+                    address={order.user ? order.user.address : ""}
                     key={order.id}
                 />
             ));

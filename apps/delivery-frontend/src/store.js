@@ -1,13 +1,20 @@
-import { createStore, applyMiddleware } from 'redux';
-import thunk from 'redux-thunk';
-import { composeWithDevTools } from 'redux-devtools-extension';
-import { combineReducers } from 'redux';
+import { createStore, combineReducers, applyMiddleware } from "redux";
+import thunk from "redux-thunk";
+import { composeWithDevTools } from "redux-devtools-extension";
+import { clientLoginReducer, clientRegisterReducer } from "./reducers/clientReducers";
 
 const reducer = combineReducers({
-    // aquí irán los reducers de delivery
+    clientLogin: clientLoginReducer,
+    clientRegister: clientRegisterReducer,
 });
 
-const initialState = {};
+const clientInfoFromStorage = localStorage.getItem("clientInfo")
+    ? JSON.parse(localStorage.getItem("clientInfo"))
+    : null;
+
+const initialState = {
+    clientLogin: { clientInfo: clientInfoFromStorage },
+};
 
 const middleware = [thunk];
 

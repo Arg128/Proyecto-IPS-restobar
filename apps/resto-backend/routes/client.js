@@ -2,6 +2,8 @@ const express = require("express");
 const router = express.Router();
 const { protect } = require("../middleware/authMiddleware");
 const {
+    registerClient,
+    loginClient,
     createClient,
     getClients,
     getClient,
@@ -10,7 +12,14 @@ const {
 } = require("../controllers/client");
 
 const { runValidation } = require("../validators");
-const { clientCreateValidator } = require("../validators/client");
+const {
+    clientRegisterValidator,
+    clientSigninValidator,
+    clientCreateValidator,
+} = require("../validators/client");
+
+router.post("/register", clientRegisterValidator, runValidation, registerClient);
+router.post("/login", clientSigninValidator, runValidation, loginClient);
 
 router
     .route("/")
