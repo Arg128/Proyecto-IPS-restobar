@@ -3,9 +3,12 @@ import { Link } from "react-router-dom";
 import axios from "axios";
 
 const OrderCreateScreen = ({ history }) => {
-    const [cliente, setCliente] = useState({ nombre: "", direccion: "", telefono: "" });
+    const clientInfoStore = localStorage.getItem("clientInfo");
+    console.log(clientInfoStore);
+    const clientInfo = JSON.parse(clientInfoStore);
+    const [cliente, setCliente] = useState({nombre: String(clientInfo.name), direccion: String(clientInfo.address), telefono: String(clientInfo.phone)});
     const [nota, setNota] = useState("");
-    const [productos] = useState([
+    const [productos, setProductos] = useState([
         { id: 1, nombre: "Lomo Saltado", precio: 18.00 },
         { id: 2, nombre: "Inca Kola 500ml", precio: 4.75 },
         { id: 3, nombre: "Arroz con Leche", precio: 8.00 },
@@ -14,7 +17,8 @@ const OrderCreateScreen = ({ history }) => {
     const [carrito, setCarrito] = useState([]);
     const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(false);
-
+    
+    
     const agregarProducto = (producto) => {
         const existe = carrito.find((p) => p.id === producto.id);
         if (existe) {
@@ -25,6 +29,21 @@ const OrderCreateScreen = ({ history }) => {
             setCarrito([...carrito, { ...producto, cantidad: 1 }]);
         }
     };
+
+    const getProductos = (req, res, err) => { 
+      try {
+          const {id, category, name, price, total} = axios.get("/api/products");
+
+          history.push("/delivery");
+      } catch (err) {
+          setErrors({ general: "Error al crear el pedido. Intenta de nuevo." });
+          setLoading(false);
+      }
+    }
+
+    const getUserInfo = (req, res, err) => {
+
+    }
 
     const quitarProducto = (id) => {
         setCarrito(carrito.filter((p) => p.id !== id));

@@ -268,6 +268,31 @@ importers:
         specifier: ^14.2.0
         version: 14.2.6
 
+  apps/mozo-frontend:
+    dependencies:
+      axios:
+        specifier: ^1.6.0
+        version: 1.18.1
+      cross-env:
+        specifier: ^10.1.0
+        version: 10.1.0
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+      react-dom:
+        specifier: ^18.3.1
+        version: 18.3.1(react@18.3.1)
+      react-router-dom:
+        specifier: ^6.22.0
+        version: 6.30.4(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      react-scripts:
+        specifier: 5.0.1
+        version: 5.0.1(@babel/plugin-syntax-flow@7.29.7(@babel/core@7.29.7))(@babel/plugin-transform-react-jsx@7.29.7(@babel/core@7.29.7))(@types/babel__core@7.20.5)(eslint@8.57.1)(react@18.3.1)(rework-visit@1.0.0)(rework@1.0.1)(sockjs-client@1.4.0)(tsx@4.23.0)(type-fest@2.19.0)(typescript@6.0.3)(yaml@1.10.3)
+    devDependencies:
+      serve:
+        specifier: ^14.2.0
+        version: 14.2.6
+
   apps/resto-backend:
     dependencies:
       '@libsql/client':
@@ -13744,7 +13769,9 @@ snapshots:
       pretty-format: 24.9.0
       throat: 4.1.0
     transitivePeerDependencies:
+      - bufferutil
       - supports-color
+      - utf-8-validate
 
   jest-leak-detector@24.9.0:
     dependencies:
@@ -14597,7 +14624,7 @@ snapshots:
   normalize-package-data@2.5.0:
     dependencies:
       hosted-git-info: 2.8.9
-      resolve: 1.15.0
+      resolve: 1.22.12
       semver: 5.7.2
       validate-npm-package-license: 3.0.4
 

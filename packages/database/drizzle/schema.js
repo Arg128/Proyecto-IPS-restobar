@@ -40,7 +40,8 @@ const clients = sqliteTable("Clients", {
     name: text("name").notNull(),
     address: text("address").notNull(),
     phone: text("phone").notNull(),
-    email: text("email").notNull(),
+    email: text("email").notNull().unique(),
+    password: text("password").notNull().default(""),
     dni: text("dni").notNull(),
     createdAt: text("createdAt").notNull().default(sql`(datetime('now'))`),
     updatedAt: text("updatedAt").notNull().default(sql`(datetime('now'))`),
@@ -88,7 +89,6 @@ const eventosCoccion = sqliteTable("eventos_coccion", {
     productId: integer("productId").notNull().references(() => products.id, { onDelete: "CASCADE" }),
     nombre: text("nombre").notNull(),
     duracionSegundos: integer("duracionSegundos").notNull().default(0),
-    orden: integer("orden").notNull().default(0),
 });
 
 /* ========== Pagos ========== */
