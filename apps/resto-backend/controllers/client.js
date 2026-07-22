@@ -1,5 +1,54 @@
 const { eq, or, like, count } = require("drizzle-orm");
-const { db, now, clients } = require("@restobar/database");
+const bcrypt = require("bcrypt");
+const { db, now, clients, users } = require("@restobar/database");
+const generateToken = require("../utils/generateToken");
+
+exports.registerClient = async (req, res) => {
+    const { name, email, password, address, phone, dni } = req.body;
+    const existing = db.select().from(clients).where(eq(clients.email, email)).get();
+    if (existing) {
+        res.status(400);
+        throw new Error("Client already exists");
+    }
+
+    const salt = await bcrypt.genSaltSync(10);
+    const hashedPassword = await bcrypt.hashSync(password, salt);
+
+    const client = db.insert(clients).values({
+        name, email, password: hashedPassword, address, phone, dni,
+        createdAt: now(), updatedAt: now(),
+    }).returning().get();
+
+    res.status(201).json({
+        _id: client.id,
+        name: client.name,
+        email: client.email,
+        address: client.address,
+        phone: client.phone,
+        dni: client.dni,
+        token: generateToken(client.id),
+    });
+};
+
+exports.loginClient = async (req, res, next) => {
+    const { email, password } = req.body;
+    const client = await db.select().from(clients).where(eq(clients.email, email)).get();
+
+    if (client && bcrypt.compareSync(password, client.password)) {
+        res.json({
+            _id: client.id,
+            name: client.name,
+            email: client.email,
+            address: client.address,
+            phone: client.phone,
+            dni: client.dni,
+            token: generateToken(client.id),
+        });
+    } else {
+        res.status(401);
+        next(new Error("Invalid email or password"));
+    }
+};
 
 exports.createClient = async (req, res) => {
     const { name, address, phone, email, dni } = req.body;

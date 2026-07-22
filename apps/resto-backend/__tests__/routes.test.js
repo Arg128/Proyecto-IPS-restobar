@@ -8,9 +8,9 @@ jest.mock("../controllers/category", () => ({
 
 const { getProducts } = require("../controllers/product");
 const { getCategories } = require("../controllers/category");
-const router = require("../routes/productos");
+const router = require("../routes/products");
 
-describe("routes/productos.js", () => {
+describe("routes/products.js", () => {
     it("GET / delega a getProducts con ?all=true", () => {
         const route = router.stack.find(r => r.route?.path === "/" && r.route?.methods?.get);
         expect(route).toBeDefined();
