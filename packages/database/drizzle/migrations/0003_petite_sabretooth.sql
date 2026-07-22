@@ -1,0 +1,1 @@
+ALTER TABLE `Pagos` ADD `orderId` integer REFERENCES Orders(id);

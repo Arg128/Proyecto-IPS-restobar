@@ -7,10 +7,9 @@ exports.orderCreateValidator = [
         .isFloat()
         .withMessage("Total price must be a number"),
     check("clientId")
-        .notEmpty()
-        .withMessage("Client ID is required")
-        .isNumeric()
-        .withMessage("Client ID must be a number"),
+    .optional({ nullable: true })
+    .isNumeric()
+    .withMessage("Client ID must be a number"),
     check("tableId")
         .isNumeric()
         .withMessage("Client ID must be a number")

@@ -98,6 +98,7 @@ const pagos = sqliteTable("Pagos", {
     metodo_pago: text("metodo_pago").notNull().default("efectivo"),
     estado: text("estado").notNull().default("completado"),
     referencia: text("referencia"),
+    orderId: integer("orderId").references(() => orders.id, { onDelete: "SET NULL" }),
     createdAt: text("createdAt").notNull().default(sql`(datetime('now'))`),
     updatedAt: text("updatedAt").notNull().default(sql`(datetime('now'))`),
 });
@@ -228,6 +229,10 @@ const eventosCoccionRelations = relations(eventosCoccion, ({ one }) => ({
 
 const pagosRelations = relations(pagos, ({ one }) => ({
     factura: one(facturas),
+    order: one(orders, {
+        fields: [pagos.orderId],
+        references: [orders.id],
+    }),
 }));
 
 const facturasRelations = relations(facturas, ({ one }) => ({

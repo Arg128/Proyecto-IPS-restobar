@@ -63,23 +63,26 @@ const getResumenGeneral = async (req, res) => {
     let pagoFilter = eq(pagos.estado, "completado");
     if (desde) pagoFilter = and(pagoFilter, gte(pagos.createdAt, desde));
 
-    const totalIngresos = db.select({ total: sum(pagos.monto) }).from(pagos).where(pagoFilter).get();
-    const totalPagos = db.select({ total: count() }).from(pagos).where(pagoFilter).get();
-    const totalFacturasCount = db.select({ total: count() }).from(facturas).get();
+    const totalIngresos = await db.select({ total: sum(pagos.monto) }).from(pagos).where(pagoFilter).get();
+    const totalPagos = await db.select({ total: count() }).from(pagos).where(pagoFilter).get();
+    const totalFacturasCount = await db.select({ total: count() }).from(facturas).get();
 
     let gastoFilter = undefined;
     if (desde) gastoFilter = gte(gastos.createdAt, desde);
     const totalGastos = gastoFilter
-        ? db.select({ total: sum(gastos.monto) }).from(gastos).where(gastoFilter).get()
-        : db.select({ total: sum(gastos.monto) }).from(gastos).get();
+        ? await db.select({ total: sum(gastos.monto) }).from(gastos).where(gastoFilter).get()
+        : await db.select({ total: sum(gastos.monto) }).from(gastos).get();
 
-    res.json({
-        totalIngresos: totalIngresos.total || 0,
-        totalGastos: totalGastos.total || 0,
-        ganancia: (totalIngresos.total || 0) - (totalGastos.total || 0),
-        totalFacturas: totalFacturasCount.total || 0,
-        totalPagos: totalPagos.total || 0,
-    });
+const ingresos = Number(totalIngresos.total) || 0;
+const gastosTotal = Number(totalGastos.total) || 0;
+
+res.json({
+    totalIngresos: ingresos,
+    totalGastos: gastosTotal,
+    ganancia: ingresos - gastosTotal,
+    totalFacturas: totalFacturasCount.total || 0,
+    totalPagos: totalPagos.total || 0,
+});
 };
 
 module.exports = { getIngresos, getMetodosPago, getResumenGastos, getResumenGeneral };

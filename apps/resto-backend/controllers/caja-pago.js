@@ -1,5 +1,5 @@
 const { eq } = require("drizzle-orm");
-const { db, now, pagos, facturas } = require("@restobar/database");
+const { db, now, pagos, facturas, orders, tables } = require("@restobar/database");
 
 const getPagos = async (req, res) => {
     const result = await db.select().from(pagos).all();
@@ -21,11 +21,28 @@ const getPagoById = async (req, res) => {
 };
 
 const createPago = async (req, res) => {
-    const { monto, metodo_pago, referencia } = req.body;
+    const { monto, metodo_pago, referencia, orderId } = req.body;
+
     const pago = db.insert(pagos).values({
-        monto: Number(monto), metodo_pago, referencia, estado: "completado",
-        createdAt: now(), updatedAt: now(),
+        monto: Number(monto),
+        metodo_pago,
+        referencia,
+        estado: "completado",
+        orderId: orderId ? Number(orderId) : null,
+        createdAt: now(),
+        updatedAt: now(),
     }).returning().get();
+
+    if (orderId) {
+        const order = await db.select().from(orders).where(eq(orders.id, Number(orderId))).get();
+        if (order) {
+            await db.update(orders).set({ isPaid: true, updatedAt: now() }).where(eq(orders.id, Number(orderId))).run();
+            if (order.tableId) {
+                await db.update(tables).set({ occupied: false }).where(eq(tables.id, order.tableId)).run();
+            }
+        }
+    }
+
     res.status(201).json(pago);
 };
 

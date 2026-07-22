@@ -1,10 +1,10 @@
 const { eq, and, or, like, gte, lt, count, sum } = require("drizzle-orm");
-const { db, now, orders, clients, tables, orderProducts, products } = require("@restobar/database");
+const { db, now, orders, clients, tables, orderProducts, products, users } = require("@restobar/database");
 
 exports.createOrder = async (req, res) => {
     const { total, tableId, clientId, products: prods, delivery, note } = req.body;
 
-    const created = db.insert(orders).values({
+    const created = await db.insert(orders).values({
         total: Number(total),
         tableId: delivery ? null : Number(tableId),
         userId: req.user.id,
@@ -22,7 +22,7 @@ exports.createOrder = async (req, res) => {
             quantity: p.quantity || 1,
         }).run();
 
-        const prod = db.select().from(products).where(eq(products.id, Number(p.id))).get();
+        const prod = await db.select().from(products).where(eq(products.id, Number(p.id))).get();
         if (prod) {
             await db.update(products).set({ stock: prod.stock - (p.quantity || 1) }).where(eq(products.id, Number(p.id))).run();
         }
@@ -59,28 +59,30 @@ exports.getOrders = async (req, res) => {
     }
 
     const result = await query.all();
-    const total = countQuery.get();
+    const total = await countQuery.get();
 
-    const withRelations = result.map(o => {
-        const client = o.clientId ? db.select().from(clients).where(eq(clients.id, o.clientId)).get() : null;
-        const table = o.tableId ? db.select().from(tables).where(eq(tables.id, o.tableId)).get() : null;
-        return { ...o, client: client || null, table: table || null };
-    });
+    const withRelations = [];
+    for (const o of result) {
+        const client = o.clientId ? await db.select().from(clients).where(eq(clients.id, o.clientId)).get() : null;
+        const table = o.tableId ? await db.select().from(tables).where(eq(tables.id, o.tableId)).get() : null;
+        withRelations.push({ ...o, client: client || null, table: table || null });
+    }
 
     res.json({ orders: withRelations, page, pages: Math.ceil(total.total / pageSize) });
 };
 
 exports.getOrder = async (req, res) => {
-    const order = db.select().from(orders).where(eq(orders.id, Number(req.params.id))).get();
+    const order = await db.select().from(orders).where(eq(orders.id, Number(req.params.id))).get();
 
     if (order) {
-        const client = order.clientId ? db.select().from(clients).where(eq(clients.id, order.clientId)).get() : null;
-        const table = order.tableId ? db.select().from(tables).where(eq(tables.id, order.tableId)).get() : null;
+        const client = order.clientId ? await db.select().from(clients).where(eq(clients.id, order.clientId)).get() : null;
+        const table = order.tableId ? await db.select().from(tables).where(eq(tables.id, order.tableId)).get() : null;
         const orderProds = await db.select().from(orderProducts).where(eq(orderProducts.orderId, order.id)).all();
-        const productsWithQty = orderProds.map(op => {
-            const prod = db.select().from(products).where(eq(products.id, op.productId)).get();
-            return { ...prod, quantity: op.quantity };
-        });
+        const productsWithQty = [];
+        for (const op of orderProds) {
+            const prod = await db.select().from(products).where(eq(products.id, op.productId)).get();
+            productsWithQty.push({ ...prod, quantity: op.quantity });
+        }
         res.json({ ...order, client, table, products: productsWithQty });
     } else {
         res.status(404);
@@ -89,14 +91,14 @@ exports.getOrder = async (req, res) => {
 };
 
 exports.updateOrderPay = async (req, res) => {
-    const order = db.select().from(orders).where(eq(orders.id, Number(req.params.id))).get();
+    const order = await db.select().from(orders).where(eq(orders.id, Number(req.params.id))).get();
 
     if (order) {
         if (order.tableId) {
             await db.update(tables).set({ occupied: false }).where(eq(tables.id, order.tableId)).run();
         }
         await db.update(orders).set({ isPaid: !order.isPaid, updatedAt: now() }).where(eq(orders.id, Number(req.params.id))).run();
-        const updated = db.select().from(orders).where(eq(orders.id, Number(req.params.id))).get();
+        const updated = await db.select().from(orders).where(eq(orders.id, Number(req.params.id))).get();
         res.json(updated);
     } else {
         res.status(404);
@@ -105,7 +107,7 @@ exports.updateOrderPay = async (req, res) => {
 };
 
 exports.updateOrder = async (req, res) => {
-    const order = db.select().from(orders).where(eq(orders.id, Number(req.params.id))).get();
+    const order = await db.select().from(orders).where(eq(orders.id, Number(req.params.id))).get();
     const { total, clientId, tableId, delivery, products: prods, note } = req.body;
 
     if (!order) {
@@ -137,29 +139,29 @@ exports.updateOrder = async (req, res) => {
     if (prods && Number(total) !== order.total) {
         const oldProds = await db.select().from(orderProducts).where(eq(orderProducts.orderId, order.id)).all();
         for (const op of oldProds) {
-            const prod = db.select().from(products).where(eq(products.id, op.productId)).get();
+            const prod = await db.select().from(products).where(eq(products.id, op.productId)).get();
             if (prod) await db.update(products).set({ stock: prod.stock + op.quantity }).where(eq(products.id, op.productId)).run();
         }
         await db.delete(orderProducts).where(eq(orderProducts.orderId, order.id)).run();
         for (const p of prods) {
             await db.insert(orderProducts).values({ orderId: order.id, productId: Number(p.id), quantity: p.quantity || 1 }).run();
-            const prod = db.select().from(products).where(eq(products.id, Number(p.id))).get();
+            const prod = await db.select().from(products).where(eq(products.id, Number(p.id))).get();
             if (prod) await db.update(products).set({ stock: prod.stock - (p.quantity || 1) }).where(eq(products.id, Number(p.id))).run();
         }
         updates.total = Number(total);
     }
 
     await db.update(orders).set(updates).where(eq(orders.id, Number(req.params.id))).run();
-    const updated = db.select().from(orders).where(eq(orders.id, Number(req.params.id))).get();
+    const updated = await db.select().from(orders).where(eq(orders.id, Number(req.params.id))).get();
     res.status(200).json(updated);
 };
 
 exports.updateOrderDelivery = async (req, res) => {
-    const order = db.select().from(orders).where(eq(orders.id, Number(req.params.id))).get();
+    const order = await db.select().from(orders).where(eq(orders.id, Number(req.params.id))).get();
 
     if (order) {
         await db.update(orders).set({ delivery: !order.delivery, updatedAt: now() }).where(eq(orders.id, Number(req.params.id))).run();
-        const updated = db.select().from(orders).where(eq(orders.id, Number(req.params.id))).get();
+        const updated = await db.select().from(orders).where(eq(orders.id, Number(req.params.id))).get();
         res.json(updated);
     } else {
         res.status(404);
@@ -168,7 +170,7 @@ exports.updateOrderDelivery = async (req, res) => {
 };
 
 exports.deleteOrder = async (req, res) => {
-    const order = db.select().from(orders).where(eq(orders.id, Number(req.params.id))).get();
+    const order = await db.select().from(orders).where(eq(orders.id, Number(req.params.id))).get();
 
     if (order) {
         await db.delete(orderProducts).where(eq(orderProducts.orderId, order.id)).run();
@@ -189,10 +191,10 @@ exports.getStatistics = async (req, res) => {
 
     const sales = await db.select().from(orders).where(eq(orders.isPaid, true)).limit(5).all();
 
-    const totalSales = db.select({ total: sum(orders.total) }).from(orders).where(eq(orders.isPaid, true)).get();
-    const deliveriesMade = db.select({ total: count() }).from(orders).where(and(eq(orders.delivery, true), eq(orders.isPaid, true))).get();
-    const totalOrdersPaid = db.select({ total: count() }).from(orders).where(eq(orders.isPaid, true)).get();
-    const todaySales = db.select({ total: sum(orders.total) }).from(orders)
+    const totalSales = await db.select({ total: sum(orders.total) }).from(orders).where(eq(orders.isPaid, true)).get();
+    const deliveriesMade = await db.select({ total: count() }).from(orders).where(and(eq(orders.delivery, true), eq(orders.isPaid, true))).get();
+    const totalOrdersPaid = await db.select({ total: count() }).from(orders).where(eq(orders.isPaid, true)).get();
+    const todaySales = await db.select({ total: sum(orders.total) }).from(orders)
         .where(and(eq(orders.isPaid, true), gte(orders.updatedAt, todayStartStr))).get();
     const unpaidOrders = await db.select().from(orders).where(eq(orders.isPaid, false)).all();
 
@@ -206,4 +208,25 @@ exports.getStatistics = async (req, res) => {
         sales,
         orders: unpaidOrders,
     });
+};
+
+exports.getPendingOrders = async (req, res) => {
+    const pendingOrders = await db
+        .select({
+            id: orders.id,
+            total: orders.total,
+            note: orders.note,
+            createdAt: orders.createdAt,
+            tableId: orders.tableId,
+            tableName: tables.name,
+            userId: orders.userId,
+            userName: users.name,
+        })
+        .from(orders)
+        .leftJoin(tables, eq(orders.tableId, tables.id))
+        .leftJoin(users, eq(orders.userId, users.id))
+        .where(eq(orders.isPaid, false))
+        .all();
+
+    res.json(pendingOrders);
 };

@@ -10,6 +10,7 @@ const {
     updateOrderDelivery,
     deleteOrder,
     getStatistics,
+    getPendingOrders,
 } = require("../controllers/order");
 
 const { runValidation } = require("../validators");
@@ -21,6 +22,8 @@ router
     .get(protect, getOrders);
 
 router.route("/statistics").get(getStatistics);
+
+router.route("/pending").get(getPendingOrders);
 
 router
     .route("/:id")
