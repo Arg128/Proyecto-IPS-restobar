@@ -25,4 +25,16 @@ const db = drizzle(client, { schema, logger: process.env.NODE_ENV === "developme
 
 const now = () => new Date().toISOString();
 
+const gracefulShutdown = async (signal) => {
+    try {
+        await client.end();
+    } catch (err) {
+        console.error(`Error closing DB on ${signal}:`, err.message);
+    }
+    process.exit(0);
+};
+
+process.on("SIGINT", () => gracefulShutdown("SIGINT"));
+process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+
 module.exports = { db, client, now };
